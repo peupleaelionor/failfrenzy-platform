@@ -122,3 +122,12 @@
 - [ ] Créer page /shop avec boutique de skins, système de tokens, previews visuels
 - [ ] Enregistrer toutes les routes dans App.tsx
 - [ ] Créer pages /leaderboard et /premium si manquantes
+
+## Déploiement Vercel + Railway
+- [ ] Adapter vercel.json pour build frontend uniquement (SPA)
+- [ ] Créer Dockerfile/Procfile pour Railway (backend Express)
+- [ ] Configurer CORS pour communication frontend ↔ backend
+- [ ] Adapter le client tRPC pour pointer vers l'URL Railway
+- [ ] Pousser le code vers GitHub
+- [ ] Déployer frontend sur Vercel
+- [ ] Fournir instructions Railway avec variables d'environnement

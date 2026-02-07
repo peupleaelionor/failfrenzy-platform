@@ -30,6 +30,22 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 async function startServer() {
   const app = express();
   const server = createServer(app);
+
+  // CORS for cross-origin requests (Vercel frontend → Railway backend)
+  const allowedOrigins = process.env.CORS_ORIGINS?.split(",") || ["http://localhost:5173", "http://localhost:3000"];
+  app.use((req, res, next) => {
+    const origin = req.headers.origin;
+    if (origin && (allowedOrigins.includes(origin) || allowedOrigins.includes("*"))) {
+      res.setHeader("Access-Control-Allow-Origin", origin);
+      res.setHeader("Access-Control-Allow-Credentials", "true");
+      res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
+      res.setHeader("Access-Control-Allow-Headers", "Content-Type,Authorization");
+    }
+    if (req.method === "OPTIONS") {
+      return res.sendStatus(200);
+    }
+    next();
+  });
   
   // Stripe webhook MUST be registered BEFORE express.json() for signature verification
   const { handleStripeWebhook } = await import("../stripe/webhook");
