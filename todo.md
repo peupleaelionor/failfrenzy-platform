@@ -99,3 +99,12 @@
 - [ ] Tester les leaderboards
 - [ ] Créer premier checkpoint
 - [ ] Déployer sur Vercel
+
+## Design Restauration
+- [x] Restaurer la palette de couleurs HEX originale (#050818, #00f0ff, #ff00ff, #ffff00, etc.)
+- [x] Restaurer les effets glitch CSS (glitch-text, glitch-border, glitch-card, glitch-button)
+- [x] Restaurer les effets néon glow (neon-glow-cyan, neon-glow-magenta, neon-glow-yellow)
+- [x] Restaurer les scanlines et animations (pulse-glow, gradient, float, slide-up)
+- [x] Restaurer la scrollbar custom cyan
+- [x] Migrer les assets images (logo, boutons, targets, effets)
+- [x] Restaurer la landing page originale avec grille néon, particules, et sections complètes
