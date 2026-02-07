@@ -108,3 +108,17 @@
 - [x] Restaurer la scrollbar custom cyan
 - [x] Migrer les assets images (logo, boutons, targets, effets)
 - [x] Restaurer la landing page originale avec grille néon, particules, et sections complètes
+
+## Bugs
+- [ ] Fix: Cliquer sur JOUER donne une erreur 404 (page /game manquante)
+
+## Page /game
+- [ ] Créer la page /game avec sélection de mode et moteur Canvas intégré
+- [ ] Enregistrer la route /game dans App.tsx
+
+## Nouvelles Pages à Créer
+- [ ] Créer page /game avec moteur Canvas, sélection de mode, HUD, et intégration complète du jeu
+- [ ] Créer page /dashboard avec stats utilisateur, graphiques de progression, historique des parties
+- [ ] Créer page /shop avec boutique de skins, système de tokens, previews visuels
+- [ ] Enregistrer toutes les routes dans App.tsx
+- [ ] Créer pages /leaderboard et /premium si manquantes
