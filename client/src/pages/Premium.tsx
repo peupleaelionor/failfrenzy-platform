@@ -18,7 +18,7 @@ export default function Premium() {
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <Link href="/">
             <div className="flex items-center gap-2.5 cursor-pointer group">
-              <img src={`${BASE}01_BRANDING/Logo_Principal_Skull_Glitch.png`} alt="" className="w-8 h-auto transition-transform group-hover:rotate-12"
+              <img src={`${BASE}logo-skull-glitch.png`} alt="" className="w-8 h-auto transition-transform group-hover:rotate-12"
                 style={{ filter: 'drop-shadow(0 0 8px rgba(0,240,255,0.5))' }} />
               <span className="text-lg font-black tracking-tight">
                 <span style={{ color: '#00f0ff' }}>FAIL</span>
@@ -33,7 +33,7 @@ export default function Premium() {
       <main className="relative z-10 px-4 py-12 max-w-5xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12">
-          <img src={`${BASE}01_BRANDING/Logo_Principal_Skull_Glitch.png`} alt="" className="w-20 h-auto mx-auto mb-4"
+          <img src={`${BASE}logo-skull-glitch.png`} alt="" className="w-20 h-auto mx-auto mb-4"
             style={{ filter: 'drop-shadow(0 0 30px rgba(255,215,0,0.6))' }} />
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight mb-4">
             <span style={{ color: '#ffd700', textShadow: '0 0 40px rgba(255,215,0,0.5)' }}>PREMIUM</span>

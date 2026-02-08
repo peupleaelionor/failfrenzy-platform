@@ -58,7 +58,7 @@ const LoadingScreen: React.FC<{ progress: number }> = ({ progress }) => {
   return (
     <div className="absolute inset-0 flex flex-col items-center justify-center z-50 rounded-xl" style={{ background: '#050818' }}>
       <div className="mb-8">
-        <img src={`${BASE}01_BRANDING/Logo_Principal_Skull_Glitch.png`} alt="" className="w-24 h-auto sm:w-32 mx-auto"
+        <img src={`${BASE}logo-skull-glitch.png`} alt="" className="w-24 h-auto sm:w-32 mx-auto"
           style={{ filter: 'drop-shadow(0 0 30px rgba(0,240,255,0.6))', animation: 'ffSpin 3s linear infinite' }} />
       </div>
       <div className="w-48 sm:w-64 h-2 rounded-full overflow-hidden mb-3"
@@ -505,7 +505,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ mode, assets, onScoreUpd
       {isPaused && !showGameOver && (
         <div className="absolute inset-0 flex items-center justify-center rounded-xl z-20" style={{ background: 'rgba(5,8,24,0.92)', backdropFilter: 'blur(8px)' }}>
           <div className="text-center px-6">
-            <img src={`${BASE}01_BRANDING/Logo_Principal_Skull_Glitch.png`} alt="" className="w-16 h-auto mx-auto mb-4 opacity-60" style={{ filter: 'drop-shadow(0 0 20px rgba(0,240,255,0.4))' }} />
+            <img src={`${BASE}logo-skull-glitch.png`} alt="" className="w-16 h-auto mx-auto mb-4 opacity-60" style={{ filter: 'drop-shadow(0 0 20px rgba(0,240,255,0.4))' }} />
             <h2 className="text-4xl sm:text-5xl font-black mb-2" style={{ color: '#00f0ff', textShadow: '0 0 40px rgba(0,240,255,0.6)' }}>PAUSED</h2>
             <p className="text-gray-500 text-xs sm:text-sm mb-8 font-mono">Take a breath. The neon awaits.</p>
             <div className="flex flex-col gap-3 items-center">
@@ -626,7 +626,7 @@ export const GamePage: React.FC = () => {
         <div className="max-w-[900px] mx-auto flex items-center justify-between">
           <Link href="/">
             <div className="flex items-center gap-2.5 cursor-pointer group">
-              <img src={`${BASE}01_BRANDING/Logo_Principal_Skull_Glitch.png`} alt="" className="w-8 h-auto sm:w-9 transition-transform group-hover:rotate-12"
+              <img src={`${BASE}logo-skull-glitch.png`} alt="" className="w-8 h-auto sm:w-9 transition-transform group-hover:rotate-12"
                 style={{ filter: 'drop-shadow(0 0 8px rgba(0,240,255,0.5))' }} />
               <span className="text-xl sm:text-2xl font-black tracking-tight">
                 <span style={{ color: '#00f0ff', textShadow: '0 0 15px rgba(0,240,255,0.5)' }}>FAIL</span>
@@ -652,7 +652,7 @@ export const GamePage: React.FC = () => {
         {!selectedMode ? (
           <div className="max-w-2xl mx-auto">
             <div className="text-center mb-8 sm:mb-10">
-              <img src={`${BASE}01_BRANDING/Logo_Principal_Skull_Glitch.png`} alt="" className="w-24 h-auto sm:w-32 mx-auto mb-4"
+              <img src={`${BASE}logo-skull-glitch.png`} alt="" className="w-24 h-auto sm:w-32 mx-auto mb-4"
                 style={{ filter: 'drop-shadow(0 0 25px rgba(0,240,255,0.5))' }} />
               <h2 className="text-3xl sm:text-4xl md:text-5xl font-black mb-3 tracking-tight">
                 <span style={{ background: 'linear-gradient(90deg, #00f0ff, #ff00ff)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>SELECT MODE</span>

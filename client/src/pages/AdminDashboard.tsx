@@ -57,7 +57,7 @@ const AdminLogin: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
     <div className="min-h-screen flex items-center justify-center" style={{ background: '#050818' }}>
       <div className="w-full max-w-sm px-6">
         <div className="text-center mb-8">
-          <img src={`${BASE}01_BRANDING/Logo_Principal_Skull_Glitch.png`} alt=""
+          <img src={`${BASE}logo-skull-glitch.png`} alt=""
             className="w-20 mx-auto mb-4" style={{ filter: 'drop-shadow(0 0 20px rgba(0,240,255,0.5))' }} />
           <h1 className="text-2xl font-black tracking-tight">
             <span style={{ color: '#00f0ff' }}>FAIL</span>
@@ -201,7 +201,7 @@ export const AdminDashboard: React.FC = () => {
           <div className="flex items-center gap-3">
             <Link href="/">
               <div className="flex items-center gap-2 cursor-pointer group">
-                <img src={`${BASE}01_BRANDING/Logo_Principal_Skull_Glitch.png`} alt=""
+                <img src={`${BASE}logo-skull-glitch.png`} alt=""
                   className="w-8 h-auto transition-transform group-hover:rotate-12"
                   style={{ filter: 'drop-shadow(0 0 8px rgba(0,240,255,0.5))' }} />
                 <span className="text-lg font-black tracking-tight">

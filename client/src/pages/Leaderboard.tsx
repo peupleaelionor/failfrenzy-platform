@@ -107,7 +107,7 @@ export default function Leaderboard() {
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <Link href="/">
             <div className="flex items-center gap-2.5 cursor-pointer group">
-              <img src={`${BASE}01_BRANDING/Logo_Principal_Skull_Glitch.png`} alt="" className="w-8 h-auto transition-transform group-hover:rotate-12"
+              <img src={`${BASE}logo-skull-glitch.png`} alt="" className="w-8 h-auto transition-transform group-hover:rotate-12"
                 style={{ filter: 'drop-shadow(0 0 8px rgba(0,240,255,0.5))' }} />
               <span className="text-lg font-black tracking-tight">
                 <span style={{ color: '#00f0ff' }}>FAIL</span>
@@ -125,7 +125,7 @@ export default function Leaderboard() {
       <main className="relative z-10 px-4 py-8 max-w-5xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <img src={`${BASE}01_BRANDING/Logo_Principal_Skull_Glitch.png`} alt="" className="w-16 h-auto mx-auto mb-4"
+          <img src={`${BASE}logo-skull-glitch.png`} alt="" className="w-16 h-auto mx-auto mb-4"
             style={{ filter: 'drop-shadow(0 0 20px rgba(255,215,0,0.5))' }} />
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight mb-3">
             <span style={{ color: '#ffd700', textShadow: '0 0 30px rgba(255,215,0,0.5)' }}>CLASSEMENT</span>

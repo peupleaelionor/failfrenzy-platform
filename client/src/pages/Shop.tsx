@@ -97,7 +97,7 @@ export default function Shop() {
       {/* Header */}
       <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '30px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <img src={`${BASE}01_BRANDING/Logo_Principal_Skull_Glitch.png`} alt="Fail Frenzy" style={{ width: 50, height: 50 }} />
+          <img src={`${BASE}logo-skull-glitch.png`} alt="Fail Frenzy" style={{ width: 50, height: 50 }} />
           <h1 style={{ fontSize: '2rem', fontWeight: 900, background: 'linear-gradient(90deg, #00f0ff, #ff00ff)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', margin: 0 }}>
             FAIL<span style={{ color: '#ff00ff' }}>FRENZY</span>
           </h1>

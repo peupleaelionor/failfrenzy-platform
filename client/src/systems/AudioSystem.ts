@@ -60,7 +60,7 @@ export class AudioSystem {
   constructor(config: Partial<AudioConfig> = {}) {
     this.config = {
       masterVolume: 0.7,
-      musicVolume: 0.5,
+      musicVolume: 0.25,
       sfxVolume: 0.8,
       enableMusic: true,
       enableSfx: true,

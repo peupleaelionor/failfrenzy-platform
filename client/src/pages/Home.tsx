@@ -97,7 +97,7 @@ export default function Home() {
           {/* Logo Spectre du Vide */}
           <div className="mb-6 sm:mb-8 relative inline-block">
             <img 
-              src={`${import.meta.env.BASE_URL}01_BRANDING/Logo_Principal_Skull_Glitch.png`} 
+              src={`${import.meta.env.BASE_URL}logo-skull-glitch.png`} 
               alt="Fail Frenzy: Echoes of the Void" 
               className="w-32 h-32 sm:w-48 sm:h-48 mx-auto" 
               style={{

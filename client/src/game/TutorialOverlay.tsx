@@ -78,7 +78,7 @@ export const CinematicIntro: React.FC<{ onComplete: () => void }> = ({ onComplet
 
         {isTitle ? (
           <>
-            <img src={`${BASE}01_BRANDING/Logo_Principal_Skull_Glitch.png`} alt=""
+            <img src={`${BASE}logo-skull-glitch.png`} alt=""
               className="w-24 sm:w-32 mx-auto mb-6"
               style={{ filter: `drop-shadow(0 0 30px ${current.color})` }} />
             <h1 className="text-4xl sm:text-6xl font-black mb-2 tracking-tight">

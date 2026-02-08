@@ -9,7 +9,7 @@ export default function NotFound() {
         style={{ backgroundImage: 'linear-gradient(rgba(0,240,255,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(0,240,255,0.4) 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
       
       <div className="relative z-10 text-center max-w-lg">
-        <img src={`${BASE}01_BRANDING/Logo_Principal_Skull_Glitch.png`} alt="" className="w-32 h-32 mx-auto mb-8 opacity-50"
+        <img src={`${BASE}logo-skull-glitch.png`} alt="" className="w-32 h-32 mx-auto mb-8 opacity-50"
           style={{ filter: 'drop-shadow(0 0 30px rgba(255,0,255,0.3))' }} />
         
         <h1 className="text-8xl font-black mb-4 tracking-tight" style={{ color: '#ff00ff', textShadow: '0 0 40px rgba(255,0,255,0.5)' }}>404</h1>

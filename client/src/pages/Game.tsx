@@ -12,7 +12,7 @@ import { AssetLoader, preloadAssets } from '@/game/AssetLoader';
 
 const BASE = import.meta.env.BASE_URL;
 const ASSETS = {
-  logo: `${BASE}01_BRANDING/Logo_Principal_Skull_Glitch.png`,
+  logo: `${BASE}logo-skull-glitch.png`,
 };
 
 export default function Game() {

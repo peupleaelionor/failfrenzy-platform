@@ -21,7 +21,7 @@ export class AssetLoader {
 
   public static readonly MANIFEST: AssetManifest = {
     // Branding
-    logo: assetPath('01_BRANDING/Logo_Principal_Skull_Glitch.png'),
+    logo: assetPath('logo-skull-glitch.png'),
     favicon: assetPath('01_BRANDING/Favicon_Simplifie.png'),
     
     // Legacy branding (backward compat)

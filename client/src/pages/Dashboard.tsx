@@ -94,7 +94,7 @@ export default function Dashboard() {
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <Link href="/">
             <div className="flex items-center gap-2.5 cursor-pointer group">
-              <img src={`${BASE}01_BRANDING/Logo_Principal_Skull_Glitch.png`} alt="" className="w-8 h-auto transition-transform group-hover:rotate-12"
+              <img src={`${BASE}logo-skull-glitch.png`} alt="" className="w-8 h-auto transition-transform group-hover:rotate-12"
                 style={{ filter: 'drop-shadow(0 0 8px rgba(0,240,255,0.5))' }} />
               <span className="text-lg font-black tracking-tight">
                 <span style={{ color: '#00f0ff' }}>FAIL</span>
@@ -115,7 +115,7 @@ export default function Dashboard() {
         {/* Profile Header */}
         <div className="text-center mb-10">
           <div className="relative inline-block mb-4">
-            <img src={`${BASE}01_BRANDING/Logo_Principal_Skull_Glitch.png`} alt="" className="w-24 h-24 mx-auto"
+            <img src={`${BASE}logo-skull-glitch.png`} alt="" className="w-24 h-24 mx-auto"
               style={{ filter: 'drop-shadow(0 0 25px rgba(0,240,255,0.5)) drop-shadow(0 0 50px rgba(255,0,255,0.3))' }} />
             <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full flex items-center justify-center text-sm"
               style={{ background: 'linear-gradient(135deg, #00f0ff, #ff00ff)', boxShadow: '0 0 15px rgba(0,240,255,0.5)' }}>

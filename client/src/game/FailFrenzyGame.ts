@@ -1533,6 +1533,9 @@ export class FailFrenzyGame {
       // Use real spaceship image
       const drawSize = this.player.width * 2.8; // Larger for detailed ships
       
+      // Rotate 90° so ship points right
+      ctx.rotate(Math.PI / 2);
+      
       // Shadow/glow layer
       ctx.save();
       ctx.globalAlpha = 0.4 * skin.core.glowIntensity;
