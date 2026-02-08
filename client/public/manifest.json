@@ -1,0 +1,72 @@
+{
+  "name": "Fail Frenzy: The Loop - Game Design Document",
+  "short_name": "Fail Frenzy GDD",
+  "description": "A hybrid-casual mobile game where failure is the main reward. Explore the complete game design document with interactive visuals.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0a0e27",
+  "theme_color": "#00ffff",
+  "icons": [
+    {
+      "src": "/images/favicon.png",
+      "sizes": "64x64",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/logo-icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/images/logo-main.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/images/banner-social.png",
+      "sizes": "1200x630",
+      "type": "image/png",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/images/hero-glitch.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ],
+  "categories": ["games", "entertainment"],
+  "shortcuts": [
+    {
+      "name": "Game Overview",
+      "short_name": "Overview",
+      "description": "View the game overview and core concept",
+      "url": "/?section=overview",
+      "icons": [
+        {
+          "src": "/images/logo-icon.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Game Systems",
+      "short_name": "Systems",
+      "description": "Explore the game systems and mechanics",
+      "url": "/?section=systems",
+      "icons": [
+        {
+          "src": "/images/logo-icon.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
+}
