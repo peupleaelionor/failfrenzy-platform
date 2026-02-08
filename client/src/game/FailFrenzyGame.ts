@@ -23,6 +23,7 @@ import { PowerUpSystem, PowerUp } from '../systems/PowerUpSystem';
 import { AssetLoader } from './AssetLoader';
 import { getConfig, pickObstacleType, type GameConfig } from './CONFIG';
 import { getSelectedSkin, type SkinDefinition } from './SkinSystem';
+import { getIntegratedGameManager, IntegratedGameManager } from './FeatureIntegration';
 
 // ============================================================
 // TYPES
@@ -284,6 +285,9 @@ export class FailFrenzyGame {
   // Active skin
   private activeSkin: SkinDefinition;
 
+  // Feature integration manager
+  private featureManager: IntegratedGameManager;
+
   // FPS tracking for debug
   private fpsHistory: number[] = [];
   private lastFrameTime: number = 0;
@@ -362,6 +366,11 @@ export class FailFrenzyGame {
     this.activeSkin = getSelectedSkin();
     this.loadHighScores();
     this.initBackgroundStars();
+    
+    // Initialize feature manager (XYLOS + messages)
+    this.featureManager = getIntegratedGameManager();
+    this.featureManager.startRun();
+    
     this.init();
   }
 
@@ -521,6 +530,11 @@ export class FailFrenzyGame {
     this.particles.update(dt);
     this.powerups.update(dt);
     this.vfxPool.update(dt);
+
+    // Update feature manager (XYLOS + messages)
+    if (this.player) {
+      this.featureManager.update(dt, this.player.x, this.player.y);
+    }
 
     // Check difficulty label change
     const newLabel = this.difficulty.getDifficultyLabel();
@@ -1021,10 +1035,17 @@ export class FailFrenzyGame {
             this.combo.addScore('nearMiss', this.player.x + 40, this.player.y);
             this.difficulty.recordDodge();
             this.audio.playDodge();
+            // Notify feature manager (near miss)
+            this.featureManager.onNearMiss(dist);
           } else {
             this.combo.addScore('dodge', this.player.x + 40, this.player.y);
             this.difficulty.recordDodge();
             this.audio.playDodge();
+          }
+          // Check for skill moment (combo milestone)
+          const comboState = this.combo.getState();
+          if (comboState.current >= 5) {
+            this.featureManager.onSkillMoment(comboState.current);
           }
         }
       }
@@ -1169,6 +1190,9 @@ export class FailFrenzyGame {
     // Phase 1: Energy stars feed Xylos
     this.energyStarsCollected++;
     this.addXylosEnergy(5);
+    
+    // Notify feature manager (score gained)
+    this.featureManager.onScoreGained(10);
   }
 
   private activatePowerUp(powerUp: Entity): void {
@@ -1230,6 +1254,9 @@ export class FailFrenzyGame {
     this.engine.setState({ fails: state.fails + 1 });
     this.combo.breakCombo();
     this.difficulty.recordFail();
+    
+    // Notify feature manager (XYLOS + messages)
+    this.featureManager.onFail();
 
     // Effects
     this.engine.shake(25);
@@ -1362,6 +1389,9 @@ export class FailFrenzyGame {
     if (this.cfg.debug.showHitboxes || this.cfg.debug.showFPS || this.cfg.debug.showEntityCount || this.cfg.debug.showParticleCount) {
       this.renderDebug(ctx, w, h);
     }
+
+    // Render feature manager overlays (XYLOS messages, dynamic messages)
+    this.featureManager.render(ctx, w, h);
 
     ctx.restore(); // pop screen shake
   }
