@@ -27,6 +27,7 @@ export interface SkinDefinition {
   tier: SkinTier;
   price?: number; // cents, only for premium
   unlock: SkinUnlockCondition;
+  imageKey?: string; // Key in AssetLoader for spaceship image
   core: {
     color: string;
     secondaryColor: string;
@@ -63,6 +64,7 @@ export const SKINS: SkinDefinition[] = [
     name: 'Core Classic',
     tier: 'free',
     unlock: { type: 'default', value: 0, label: 'Skin par défaut' },
+    imageKey: 'vaisseau_cyan',
     core: {
       color: '#00f0ff',
       secondaryColor: '#0080ff',
@@ -90,6 +92,7 @@ export const SKINS: SkinDefinition[] = [
     name: 'Pulse Core',
     tier: 'free',
     unlock: { type: 'score', value: 100, label: 'Score 100+' },
+    imageKey: 'vaisseau_magenta',
     core: {
       color: '#00ff88',
       secondaryColor: '#00cc66',
@@ -117,6 +120,7 @@ export const SKINS: SkinDefinition[] = [
     name: 'Shadow Core',
     tier: 'free',
     unlock: { type: 'games', value: 10, label: '10 parties jouées' },
+    imageKey: 'vaisseau_vaporwave',
     core: {
       color: '#1a1a2e',
       secondaryColor: '#0f0f23',
@@ -145,6 +149,7 @@ export const SKINS: SkinDefinition[] = [
     name: 'Split Core',
     tier: 'free',
     unlock: { type: 'score', value: 250, label: 'Score 250+' },
+    imageKey: 'vaisseau_cyberpunk',
     core: {
       color: '#00f0ff',
       secondaryColor: '#9400d3',
@@ -173,6 +178,7 @@ export const SKINS: SkinDefinition[] = [
     name: 'Minimal White',
     tier: 'free',
     unlock: { type: 'time', value: 120, label: '2 min survécues' },
+    imageKey: 'vaisseau_steampunk',
     core: {
       color: '#ffffff',
       secondaryColor: '#cccccc',
@@ -203,6 +209,7 @@ export const SKINS: SkinDefinition[] = [
     tier: 'premium',
     price: 99, // 0.99€
     unlock: { type: 'purchase', value: 99, label: '0.99€' },
+    imageKey: 'vaisseau_cyber_ninja',
     core: {
       color: '#ffd700',
       secondaryColor: '#ff8c00',
@@ -233,6 +240,7 @@ export const SKINS: SkinDefinition[] = [
     tier: 'premium',
     price: 199, // 1.99€
     unlock: { type: 'purchase', value: 199, label: '1.99€' },
+    imageKey: 'vaisseau_pirate',
     core: {
       color: '#ff4400',
       secondaryColor: '#ff0000',
@@ -263,6 +271,7 @@ export const SKINS: SkinDefinition[] = [
     tier: 'premium',
     price: 199, // 1.99€
     unlock: { type: 'purchase', value: 199, label: '1.99€' },
+    imageKey: 'vaisseau_fantome',
     core: {
       color: '#4400aa',
       secondaryColor: '#220066',
@@ -292,6 +301,7 @@ export const SKINS: SkinDefinition[] = [
     tier: 'premium',
     price: 249, // 2.49€
     unlock: { type: 'purchase', value: 249, label: '2.49€' },
+    imageKey: 'vaisseau_cosmique',
     core: {
       color: '#00ffcc',
       secondaryColor: '#00aaff',
@@ -321,6 +331,7 @@ export const SKINS: SkinDefinition[] = [
     tier: 'premium',
     price: 299, // 2.99€
     unlock: { type: 'purchase', value: 299, label: '2.99€' },
+    imageKey: 'vaisseau_ange',
     core: {
       color: '#ff00ff',
       secondaryColor: '#00f0ff',

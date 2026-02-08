@@ -1526,25 +1526,30 @@ export class FailFrenzyGame {
       ctx.restore();
     }
 
-    // Draw player shape based on config
-    if (this.cfg.player.shape === 'diamond') {
-      this.drawDiamondPlayer(ctx, time);
-    } else if (this.cfg.player.shape === 'triangle') {
-      this.drawTrianglePlayer(ctx, time);
+    // Draw spaceship image from skin
+    const spaceshipImg = skin.imageKey ? this.assets.get(skin.imageKey) : null;
+    
+    if (spaceshipImg) {
+      // Use real spaceship image
+      const drawSize = this.player.width * 2.8; // Larger for detailed ships
+      
+      // Shadow/glow layer
+      ctx.save();
+      ctx.globalAlpha = 0.4 * skin.core.glowIntensity;
+      ctx.shadowBlur = 35;
+      ctx.shadowColor = skin.core.glowColor;
+      ctx.drawImage(spaceshipImg, -drawSize / 2, -drawSize / 2, drawSize, drawSize);
+      ctx.restore();
+      
+      // Main ship layer
+      ctx.save();
+      ctx.shadowBlur = 15;
+      ctx.shadowColor = skin.core.glowColor;
+      ctx.drawImage(spaceshipImg, -drawSize / 2, -drawSize / 2, drawSize, drawSize);
+      ctx.restore();
     } else {
-      // Circle fallback with sprite
-      if (img) {
-        const drawSize = this.player.width * 2.2;
-        ctx.save();
-        ctx.globalAlpha = 0.35;
-        ctx.shadowBlur = 30;
-        ctx.shadowColor = this.player.color;
-        ctx.drawImage(img, -drawSize / 2, -drawSize / 2, drawSize, drawSize);
-        ctx.restore();
-        ctx.drawImage(img, -drawSize / 2, -drawSize / 2, drawSize, drawSize);
-      } else {
-        this.drawDiamondPlayer(ctx, time);
-      }
+      // Fallback to diamond if image not loaded
+      this.drawDiamondPlayer(ctx, time);
     }
 
     ctx.restore();

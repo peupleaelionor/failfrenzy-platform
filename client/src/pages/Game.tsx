@@ -100,24 +100,19 @@ export default function Game() {
       
       {/* === NAV BAR === */}
       <nav className="fixed top-0 left-0 right-0 z-50 px-4 py-3" style={{ background: 'rgba(5,8,24,0.95)', backdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(0,240,255,0.1)' }}>
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <Link href="/">
-            <div className="flex items-center gap-3 cursor-pointer">
-              <img src={ASSETS.logo} alt="FF" className="w-8 h-8" style={{ filter: 'drop-shadow(0 0 8px rgba(0,240,255,0.5))' }} />
-              <span className="font-black text-sm tracking-wider">
-                <span style={{ color: '#00f0ff' }}>FAIL</span>
-                <span style={{ color: '#ff00ff' }} className="ml-1">FRENZY</span>
-              </span>
-            </div>
-          </Link>
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <img src={ASSETS.logo} alt="FF" className="w-12 h-12" style={{ filter: 'drop-shadow(0 0 12px rgba(0,240,255,0.6))' }} />
+            <span className="font-black text-xl tracking-wider">
+              <span style={{ color: '#00f0ff' }}>FAIL</span>
+              <span style={{ color: '#ff00ff' }} className="ml-1">FRENZY</span>
+            </span>
+          </div>
           <div className="flex items-center gap-4">
-            <Link href="/leaderboard" className="text-gray-400 hover:text-[#00f0ff] text-xs font-mono tracking-wider transition-colors hidden sm:block">CLASSEMENT</Link>
-            <Link href="/shop" className="text-gray-400 hover:text-[#ff00ff] text-xs font-mono tracking-wider transition-colors hidden sm:block">BOUTIQUE</Link>
-            <Link href="/dashboard">
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ background: 'rgba(0,240,255,0.1)', border: '1px solid rgba(0,240,255,0.2)' }}>
-                <span className="text-[#00f0ff] text-xs font-bold">PROFIL</span>
-              </div>
-            </Link>
+            <div className="px-4 py-2 rounded-lg" style={{ background: 'rgba(255,215,0,0.1)', border: '2px solid rgba(255,215,0,0.3)' }}>
+              <span className="text-gray-400 text-sm font-bold mr-2">BEST</span>
+              <span className="text-[#ffd700] text-xl font-black">{localStorage.getItem('failfrenzy_highscore') || '0'}</span>
+            </div>
           </div>
         </div>
       </nav>
@@ -160,16 +155,19 @@ export default function Game() {
 
         <div className="relative z-10 w-full max-w-5xl mx-auto">
           
-          {/* Title */}
+          {/* Logo Central + Title */}
           <div className="text-center mb-12">
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-black mb-3 tracking-tight">
-              <span style={{ color: '#00f0ff', textShadow: '0 0 30px rgba(0,240,255,0.5)' }}>CHOOSE</span>
-              <span className="text-white mx-3">YOUR</span>
-              <span style={{ color: '#ff00ff', textShadow: '0 0 30px rgba(255,0,255,0.5)' }}>MODE</span>
+            <div className="flex justify-center mb-8">
+              <img src={ASSETS.logo} alt="Fail Frenzy" className="w-48 h-48 sm:w-64 sm:h-64" style={{ filter: 'drop-shadow(0 0 40px rgba(0,240,255,0.6))' }} />
+            </div>
+            <h1 className="text-5xl sm:text-6xl md:text-7xl font-black mb-3 tracking-tight" style={{
+              background: 'linear-gradient(90deg, #00f0ff 0%, #0080ff 25%, #ff00ff 75%, #ff0080 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              textShadow: '0 0 60px rgba(0,240,255,0.4)'
+            }}>
+              SELECT MODE
             </h1>
-            <p className="text-gray-500 text-sm sm:text-base font-mono tracking-wider">
-              SELECT YOUR CHALLENGE AND PROVE YOUR SKILLS
-            </p>
           </div>
 
           {/* Mode Selection */}
