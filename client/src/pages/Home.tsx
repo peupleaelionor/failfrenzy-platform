@@ -96,7 +96,31 @@ export default function Home() {
         {/* Main content */}
         <div className="relative z-10 text-center max-w-4xl mx-auto">
           
-          {/* Premium Logo */}
+          {/* Premium Logo Tête de Mort */}
+          <div className="mb-6 sm:mb-8 relative inline-block">
+            <img 
+              src="/images/assets/logo-skull-512.png" 
+              alt="Fail Frenzy Skull" 
+              className="w-24 h-24 sm:w-32 sm:h-32 mx-auto" 
+              style={{
+                filter: `drop-shadow(0 0 20px rgba(255,0,255,0.8)) drop-shadow(0 0 40px rgba(0,240,255,0.6)) ${glitchActive ? 'hue-rotate(180deg)' : ''}`,
+                animation: 'skullPulse 3s ease-in-out infinite',
+              }}
+            />
+            {/* Glitch overlay */}
+            {glitchActive && (
+              <img 
+                src="/images/assets/logo-skull-512.png" 
+                alt="" 
+                className="absolute inset-0 w-24 h-24 sm:w-32 sm:h-32 mx-auto pointer-events-none" 
+                style={{
+                  filter: 'drop-shadow(0 0 30px rgba(255,255,0,1))',
+                  opacity: 0.7,
+                  transform: 'translate(2px, -2px)',
+                }}
+              />
+            )}
+          </div>
           <div className="mb-6 sm:mb-8">
             <img 
               src={`${import.meta.env.BASE_URL}images/assets/pulse_clicker_logo_512.png`} 
@@ -141,9 +165,35 @@ export default function Home() {
             }}>
             WHERE FAILURE IS THE MAIN REWARD
           </p>
-          <p className="text-gray-500 text-xs sm:text-sm font-mono mb-8 sm:mb-10 tracking-wider">
+          <p className="text-gray-500 text-xs sm:text-sm font-mono mb-6 tracking-wider">
             DODGE. FAIL. REPEAT. COMPETE.
           </p>
+          
+          {/* Univers narratif - La légende du crâne */}
+          <div className="max-w-2xl mx-auto mb-8 sm:mb-10 px-4">
+            <div className="relative p-6 rounded-xl" style={{ 
+              background: 'linear-gradient(135deg, rgba(255,0,255,0.08) 0%, rgba(0,240,255,0.05) 100%)',
+              border: '1px solid rgba(255,0,255,0.2)',
+              boxShadow: '0 0 30px rgba(255,0,255,0.1), inset 0 0 20px rgba(0,240,255,0.05)',
+            }}>
+              <div className="flex items-start gap-4">
+                <img 
+                  src="/images/assets/logo-skull-256.png" 
+                  alt="" 
+                  className="w-16 h-16 flex-shrink-0" 
+                  style={{ filter: 'drop-shadow(0 0 15px rgba(255,0,255,0.6))' }}
+                />
+                <div className="text-left flex-1">
+                  <p className="text-gray-300 text-sm sm:text-base leading-relaxed mb-3">
+                    Dans les arènes néon de <span style={{ color: '#ff00ff', fontWeight: 'bold' }}>la Zone Glitch</span>, le <span style={{ color: '#00f0ff', fontWeight: 'bold' }}>Crâne Cosmique</span> observe chaque joueur. Chaque échec nourrit sa puissance, chaque combo illumine ses yeux.
+                  </p>
+                  <p className="text-gray-400 text-xs sm:text-sm italic">
+                    « L'échec n'est pas une fin, c'est le carburant de la gloire. »
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
 
           {/* CTA Button - Using JOUER asset */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-10 sm:mb-14">
@@ -525,8 +575,8 @@ export default function Home() {
       <footer className="border-t py-8 px-4" style={{ borderColor: 'rgba(0,240,255,0.1)' }}>
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <img src={`${import.meta.env.BASE_URL}images/assets/pulse_clicker_logo_512.png`} alt="FF" className="w-7 h-7"
-              style={{ filter: 'drop-shadow(0 0 5px rgba(0,240,255,0.4))' }} />
+            <img src="/images/assets/logo-skull-icon.png" alt="FF" className="w-7 h-7"
+              style={{ filter: 'drop-shadow(0 0 8px rgba(255,0,255,0.5))' }} />
             <span className="text-gray-600 text-xs font-mono">&copy; 2026 Fail Frenzy Studios</span>
           </div>
           <div className="flex gap-6 text-gray-600 text-xs font-mono">
@@ -567,6 +617,10 @@ export default function Home() {
         @keyframes progressPulse {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.7; }
+        }
+        @keyframes skullPulse {
+          0%, 100% { transform: scale(1) rotate(0deg); filter: drop-shadow(0 0 20px rgba(255,0,255,0.8)) drop-shadow(0 0 40px rgba(0,240,255,0.6)); }
+          50% { transform: scale(1.05) rotate(2deg); filter: drop-shadow(0 0 30px rgba(255,0,255,1)) drop-shadow(0 0 60px rgba(0,240,255,0.8)); }
         }
       `}</style>
     </div>

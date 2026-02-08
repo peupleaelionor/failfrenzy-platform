@@ -55,10 +55,7 @@ export default function Game() {
   ];
 
   const handleModeSelect = async (mode: GameMode) => {
-    if (!isAuthenticated) {
-      window.location.href = getLoginUrl();
-      return;
-    }
+    // Mode invité : pas besoin d'authentification pour jouer
     setSelectedMode(mode);
     if (assets) return;
     setIsLoading(true);
