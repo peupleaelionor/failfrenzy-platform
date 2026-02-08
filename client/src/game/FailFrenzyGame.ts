@@ -660,8 +660,11 @@ export class FailFrenzyGame {
   private updatePlayer(dt: number): void {
     if (!this.player) return;
 
-    this.player.velocity.x *= 0.88;
-    this.player.velocity.y *= 0.88;
+    // Apply skin modifiers (Phase 2: Gameplay skins)
+    const modifiers = this.featureManager.getSkinModifiers();
+    const friction = 0.88 * modifiers.speedMultiplier;
+    this.player.velocity.x *= friction;
+    this.player.velocity.y *= friction;
 
     // Breathing glow effect (scale 0.95-1.05, 1s loop)
     if (this.cfg.player.breathingGlow) {
@@ -761,6 +764,14 @@ export class FailFrenzyGame {
     // Collectible chance
     if (Math.random() < 0.2) {
       this.spawnCollectible(y);
+    }
+
+    // Phase 2: Narrative obstacles (10% chance)
+    if (Math.random() < 0.1) {
+      const types = ['vortex', 'fissure', 'mini_black_hole'] as const;
+      const type = types[Math.floor(Math.random() * types.length)];
+      const narrativeY = 80 + Math.random() * 440;
+      this.featureManager.spawnNarrativeObstacle(type, 850, narrativeY);
     }
   }
 
@@ -1076,6 +1087,12 @@ export class FailFrenzyGame {
     const isInvincible = this.player.components.get('invincible');
     const isGhost = this.player.components.get('ghost');
 
+    // Phase 2: Check narrative obstacle collisions (event horizon = instant death)
+    if (!isInvincible && this.featureManager.checkEventHorizonCollision(this.player.x, this.player.y)) {
+      this.gameOver(false);
+      return;
+    }
+
     // Obstacle collisions
     for (const obstacle of this.obstacles) {
       if (this.simpleCollision(this.player, obstacle)) {
@@ -1189,10 +1206,11 @@ export class FailFrenzyGame {
     this.audio.playCollect();
     // Phase 1: Energy stars feed Xylos
     this.energyStarsCollected++;
-    this.addXylosEnergy(5);
+    const modifiers = this.featureManager.getSkinModifiers();
+    this.addXylosEnergy(5 * modifiers.collectibleMultiplier);
     
     // Notify feature manager (score gained)
-    this.featureManager.onScoreGained(10);
+    this.featureManager.onScoreGained(10 * modifiers.scoreMultiplier);
   }
 
   private activatePowerUp(powerUp: Entity): void {
@@ -1230,10 +1248,12 @@ export class FailFrenzyGame {
   private onFail(): void {
     if (!this.player) return;
     const state = this.engine.getState();
+    const modifiers = this.featureManager.getSkinModifiers();
 
-    // Phase 1: Shield system absorbs hits
+    // Phase 1: Shield system absorbs hits (modified by skin)
+    const damage = 1 / modifiers.shieldStrength;
     if (this.shieldHP > 0) {
-      this.shieldHP--;
+      this.shieldHP -= damage;
       this.shieldFlash = 1.5;
       this.shieldRegenTimer = 0;
       // Shield absorb effects (lighter than full fail)
