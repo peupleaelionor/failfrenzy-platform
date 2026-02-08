@@ -1,333 +1,281 @@
 /**
- * FAIL FRENZY - Shop Page
- * Skins marketplace with visual previews, token purchase, and rarity system
+ * FAIL FRENZY - Shop Page (Standalone)
+ * Boutique de skins avec preview visuel, système de rareté, tokens locaux
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Link } from 'wouter';
-import { useAuth } from "@/_core/hooks/useAuth";
-import { getLoginUrl } from "@/const";
-import { trpc } from "@/lib/trpc";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ShoppingCart, Sparkles, Lock, Check, Coins, Star } from "lucide-react";
-import { toast } from "sonner";
 
-const ASSETS = {
-  logo: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663278017338/OzPqrjVSMXFHuMQc.png",
+const BASE = import.meta.env.BASE_URL || '/';
+
+interface Skin {
+  id: string;
+  name: string;
+  description: string;
+  rarity: 'common' | 'rare' | 'epic' | 'legendary';
+  price: number;
+  colors: { primary: string; secondary: string; glow: string; trail: string };
+  shape: 'diamond' | 'circle' | 'hexagon' | 'star';
+}
+
+const SKINS: Skin[] = [
+  { id: 'neon-cyan', name: 'Neon Cyan', description: 'Le classique. Simple, efficace, mortel.', rarity: 'common', price: 0, colors: { primary: '#00f0ff', secondary: '#0080ff', glow: '#00f0ff', trail: '#00f0ff' }, shape: 'diamond' },
+  { id: 'plasma-green', name: 'Plasma Vert', description: 'Énergie pure canalisée en forme.', rarity: 'common', price: 0, colors: { primary: '#00ff88', secondary: '#00cc66', glow: '#00ff88', trail: '#00ff88' }, shape: 'diamond' },
+  { id: 'hot-pink', name: 'Hot Pink', description: 'Flashy, rapide, impossible à ignorer.', rarity: 'common', price: 50, colors: { primary: '#ff2d7b', secondary: '#ff0066', glow: '#ff2d7b', trail: '#ff2d7b' }, shape: 'diamond' },
+  { id: 'solar-orange', name: 'Solar Orange', description: 'La chaleur du soleil dans tes mains.', rarity: 'rare', price: 150, colors: { primary: '#ff6600', secondary: '#ff9900', glow: '#ff6600', trail: '#ffaa00' }, shape: 'diamond' },
+  { id: 'void-purple', name: 'Void Purple', description: 'Né du néant, forgé dans le glitch.', rarity: 'rare', price: 200, colors: { primary: '#9933ff', secondary: '#6600cc', glow: '#9933ff', trail: '#cc66ff' }, shape: 'hexagon' },
+  { id: 'ice-crystal', name: 'Ice Crystal', description: 'Froid comme la mort, beau comme la glace.', rarity: 'rare', price: 250, colors: { primary: '#66ccff', secondary: '#3399ff', glow: '#66ccff', trail: '#99ddff' }, shape: 'hexagon' },
+  { id: 'blood-moon', name: 'Blood Moon', description: 'Quand la lune saigne, le chaos commence.', rarity: 'epic', price: 500, colors: { primary: '#ff0033', secondary: '#cc0000', glow: '#ff0033', trail: '#ff3366' }, shape: 'star' },
+  { id: 'galaxy-shift', name: 'Galaxy Shift', description: 'Les étoiles dansent autour de toi.', rarity: 'epic', price: 750, colors: { primary: '#ff00ff', secondary: '#00f0ff', glow: '#ff00ff', trail: '#00f0ff' }, shape: 'star' },
+  { id: 'golden-skull', name: 'Golden Skull', description: 'Le Crâne Cosmique t\'a choisi. Porte sa marque.', rarity: 'legendary', price: 1500, colors: { primary: '#ffd700', secondary: '#ffaa00', glow: '#ffd700', trail: '#ffee88' }, shape: 'star' },
+  { id: 'cosmic-void', name: 'Cosmic Void', description: 'L\'ultime. Le néant incarné. La fin de tout.', rarity: 'legendary', price: 3000, colors: { primary: '#ffffff', secondary: '#ff00ff', glow: '#ffffff', trail: '#ff00ff' }, shape: 'circle' },
+];
+
+const RARITY = {
+  common: { label: 'COMMUN', bg: 'rgba(128,128,128,0.08)', border: 'rgba(128,128,128,0.25)', text: '#888888', glow: 'rgba(128,128,128,0.15)' },
+  rare: { label: 'RARE', bg: 'rgba(0,240,255,0.08)', border: 'rgba(0,240,255,0.25)', text: '#00f0ff', glow: 'rgba(0,240,255,0.2)' },
+  epic: { label: 'ÉPIQUE', bg: 'rgba(255,0,255,0.08)', border: 'rgba(255,0,255,0.25)', text: '#ff00ff', glow: 'rgba(255,0,255,0.2)' },
+  legendary: { label: 'LÉGENDAIRE', bg: 'rgba(255,215,0,0.08)', border: 'rgba(255,215,0,0.25)', text: '#ffd700', glow: 'rgba(255,215,0,0.25)' },
 };
 
-const RARITY_COLORS: Record<string, { bg: string; border: string; text: string; glow: string }> = {
-  common: { bg: 'rgba(128,128,128,0.1)', border: 'rgba(128,128,128,0.3)', text: '#888888', glow: 'rgba(128,128,128,0.2)' },
-  rare: { bg: 'rgba(0,240,255,0.1)', border: 'rgba(0,240,255,0.3)', text: '#00f0ff', glow: 'rgba(0,240,255,0.3)' },
-  epic: { bg: 'rgba(255,0,255,0.1)', border: 'rgba(255,0,255,0.3)', text: '#ff00ff', glow: 'rgba(255,0,255,0.3)' },
-  legendary: { bg: 'rgba(255,215,0,0.1)', border: 'rgba(255,215,0,0.3)', text: '#ffd700', glow: 'rgba(255,215,0,0.3)' },
-};
+function SkinPreview({ skin, size = 80 }: { skin: Skin; size?: number }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d')!;
+    const s = size * 2;
+    canvas.width = s; canvas.height = s;
+    ctx.clearRect(0, 0, s, s);
+    const cx = s / 2, cy = s / 2, r = s * 0.3;
+
+    // Glow
+    const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, r * 1.8);
+    grad.addColorStop(0, skin.colors.glow + '40');
+    grad.addColorStop(1, 'transparent');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, s, s);
+
+    // Shape
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.beginPath();
+    if (skin.shape === 'diamond') {
+      ctx.moveTo(0, -r); ctx.lineTo(r, 0); ctx.lineTo(0, r); ctx.lineTo(-r, 0);
+    } else if (skin.shape === 'hexagon') {
+      for (let i = 0; i < 6; i++) { const a = (Math.PI / 3) * i - Math.PI / 2; ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r); }
+    } else if (skin.shape === 'star') {
+      for (let i = 0; i < 5; i++) {
+        const a1 = (Math.PI * 2 / 5) * i - Math.PI / 2;
+        const a2 = a1 + Math.PI / 5;
+        ctx.lineTo(Math.cos(a1) * r, Math.sin(a1) * r);
+        ctx.lineTo(Math.cos(a2) * r * 0.5, Math.sin(a2) * r * 0.5);
+      }
+    } else {
+      ctx.arc(0, 0, r, 0, Math.PI * 2);
+    }
+    ctx.closePath();
+    const fill = ctx.createLinearGradient(-r, -r, r, r);
+    fill.addColorStop(0, skin.colors.primary);
+    fill.addColorStop(1, skin.colors.secondary);
+    ctx.fillStyle = fill;
+    ctx.fill();
+    ctx.strokeStyle = skin.colors.glow;
+    ctx.lineWidth = 3;
+    ctx.shadowColor = skin.colors.glow;
+    ctx.shadowBlur = 15;
+    ctx.stroke();
+    ctx.restore();
+  }, [skin, size]);
+
+  return <canvas ref={canvasRef} style={{ width: size, height: size }} />;
+}
+
+function getTokens(): number {
+  try { return parseInt(localStorage.getItem('failfrenzy_tokens') || '500', 10); } catch { return 500; }
+}
+function setTokens(n: number) { localStorage.setItem('failfrenzy_tokens', String(n)); }
+function getOwned(): string[] {
+  try { return JSON.parse(localStorage.getItem('failfrenzy_owned_skins') || '["neon-cyan","plasma-green"]'); } catch { return ['neon-cyan', 'plasma-green']; }
+}
+function setOwned(ids: string[]) { localStorage.setItem('failfrenzy_owned_skins', JSON.stringify(ids)); }
 
 export default function Shop() {
-  const { user, isAuthenticated, loading } = useAuth();
-  const [selectedRarity, setSelectedRarity] = useState<string>('all');
+  const [filter, setFilter] = useState<string>('all');
+  const [tokens, setTokensState] = useState(getTokens);
+  const [owned, setOwnedState] = useState(getOwned);
+  const [buying, setBuying] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ msg: string; color: string } | null>(null);
 
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      window.location.href = getLoginUrl();
-    }
-  }, [loading, isAuthenticated]);
-
-  // Fetch data
-  const { data: skins, refetch: refetchSkins } = trpc.shop.getSkins.useQuery(undefined, { enabled: isAuthenticated });
-  const { data: mySkins } = trpc.shop.getMySkins.useQuery(undefined, { enabled: isAuthenticated });
-  const { data: tokenBalance, refetch: refetchBalance } = trpc.tokens.getBalance.useQuery(undefined, { enabled: isAuthenticated });
-  
-  const purchaseSkin = trpc.shop.purchaseSkin.useMutation({
-    onSuccess: () => {
-      toast.success('Skin acheté avec succès !');
-      refetchSkins();
-      refetchBalance();
-    },
-    onError: (error) => {
-      toast.error(error.message || 'Erreur lors de l\'achat');
-    },
-  });
-
-  if (loading || !isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-[#050818] flex items-center justify-center">
-        <div className="text-center">
-          <img src={ASSETS.logo} alt="Loading" className="w-24 h-24 mx-auto mb-4 animate-spin"
-            style={{ filter: 'drop-shadow(0 0 20px rgba(0,240,255,0.5))' }} />
-          <p className="text-[#00f0ff] font-mono text-sm">LOADING...</p>
-        </div>
-      </div>
-    );
-  }
-
-  const mySkinIds = new Set(mySkins?.map(s => s.id) || []);
-  const filteredSkins = skins?.filter(s => selectedRarity === 'all' || s.rarity === selectedRarity) || [];
-
-  const handlePurchase = (skinId: string, price: number) => {
-    if ((tokenBalance || 0) < price) {
-      toast.error('Tokens insuffisants');
-      return;
-    }
-    purchaseSkin.mutate({ skinId });
+  const showToast = (msg: string, color: string) => {
+    setToast({ msg, color });
+    setTimeout(() => setToast(null), 2500);
   };
+
+  const handleBuy = (skin: Skin) => {
+    if (owned.includes(skin.id)) return;
+    if (tokens < skin.price) { showToast('Tokens insuffisants !', '#ff2d7b'); return; }
+    setBuying(skin.id);
+    setTimeout(() => {
+      const newTokens = tokens - skin.price;
+      const newOwned = [...owned, skin.id];
+      setTokens(newTokens);
+      setOwned(newOwned);
+      setTokensState(newTokens);
+      setOwnedState(newOwned);
+      setBuying(null);
+      showToast(`${skin.name} débloqué !`, RARITY[skin.rarity].text);
+    }, 600);
+  };
+
+  const filtered = SKINS.filter(s => filter === 'all' || s.rarity === filter);
 
   return (
     <div className="min-h-screen bg-[#050818] text-white">
-      
-      {/* === NAV BAR === */}
-      <nav className="fixed top-0 left-0 right-0 z-50 px-4 py-3" style={{ background: 'rgba(5,8,24,0.95)', backdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(0,240,255,0.1)' }}>
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
+      {/* Grid bg */}
+      <div className="fixed inset-0 pointer-events-none opacity-[0.02]"
+        style={{ backgroundImage: 'linear-gradient(rgba(0,240,255,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(0,240,255,0.4) 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+
+      {/* Nav */}
+      <nav className="sticky top-0 z-50 px-4 py-3" style={{ background: 'rgba(5,8,24,0.95)', backdropFilter: 'blur(12px)', borderBottom: '1px solid rgba(0,240,255,0.1)' }}>
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
           <Link href="/">
-            <div className="flex items-center gap-3 cursor-pointer">
-              <img src={ASSETS.logo} alt="FF" className="w-8 h-8" style={{ filter: 'drop-shadow(0 0 8px rgba(0,240,255,0.5))' }} />
-              <span className="font-black text-sm tracking-wider">
+            <div className="flex items-center gap-2.5 cursor-pointer group">
+              <img src={`${BASE}images/assets/logo-skull-256.png`} alt="" className="w-8 h-auto transition-transform group-hover:rotate-12"
+                style={{ filter: 'drop-shadow(0 0 8px rgba(0,240,255,0.5))' }} />
+              <span className="text-lg font-black tracking-tight">
                 <span style={{ color: '#00f0ff' }}>FAIL</span>
-                <span style={{ color: '#ff00ff' }} className="ml-1">FRENZY</span>
+                <span style={{ color: '#ff00ff' }} className="ml-0.5">FRENZY</span>
               </span>
             </div>
           </Link>
-          <div className="flex items-center gap-4">
-            <Link href="/game" className="text-gray-400 hover:text-[#00f0ff] text-xs font-mono tracking-wider transition-colors hidden sm:block">JOUER</Link>
-            <Link href="/leaderboard" className="text-gray-400 hover:text-[#00f0ff] text-xs font-mono tracking-wider transition-colors hidden sm:block">CLASSEMENT</Link>
-            <Link href="/dashboard">
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ background: 'rgba(0,240,255,0.1)', border: '1px solid rgba(0,240,255,0.2)' }}>
-                <span className="text-[#00f0ff] text-xs font-bold">{user?.name || 'JOUEUR'}</span>
-              </div>
-            </Link>
+          <div className="flex items-center gap-3">
+            <Link href="/game" className="text-gray-500 hover:text-[#00f0ff] text-xs font-mono tracking-wider transition-colors hidden sm:block">JOUER</Link>
+            <Link href="/leaderboard" className="text-gray-500 hover:text-[#00f0ff] text-xs font-mono tracking-wider transition-colors hidden sm:block">CLASSEMENT</Link>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg" style={{ background: 'rgba(255,255,0,0.08)', border: '1px solid rgba(255,255,0,0.2)' }}>
+              <span className="text-[10px] text-gray-500 font-mono">TOKENS</span>
+              <span className="font-black text-sm" style={{ color: '#ffff00' }}>{tokens}</span>
+            </div>
           </div>
         </div>
       </nav>
 
-      {/* === MAIN CONTENT === */}
-      <main className="pt-20 px-4 pb-12">
-        <div className="max-w-7xl mx-auto">
-          
-          {/* Header */}
-          <div className="mb-8">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-              <div>
-                <h1 className="text-3xl sm:text-4xl font-black tracking-tight mb-2">
-                  <span style={{ color: '#ff00ff', textShadow: '0 0 30px rgba(255,0,255,0.5)' }}>BOUTIQUE</span>
-                  <span className="text-white ml-3">DE SKINS</span>
-                </h1>
-                <p className="text-gray-500 text-sm font-mono">Personnalise ton joueur avec des skins exclusifs</p>
-              </div>
-              
-              {/* Token Balance */}
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2 px-4 py-2 rounded-lg" style={{ background: 'rgba(255,255,0,0.1)', border: '1px solid rgba(255,255,0,0.3)' }}>
-                  <Coins className="w-5 h-5" style={{ color: '#ffff00' }} />
-                  <div>
-                    <p className="text-xs text-gray-500 font-mono">TOKENS</p>
-                    <p className="text-xl font-black" style={{ color: '#ffff00', textShadow: '0 0 15px rgba(255,255,0,0.4)' }}>
-                      {tokenBalance || 0}
-                    </p>
+      {/* Toast */}
+      {toast && (
+        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-[60] px-6 py-3 rounded-xl font-bold text-sm animate-bounce"
+          style={{ background: 'rgba(5,8,24,0.95)', border: `1px solid ${toast.color}`, color: toast.color, boxShadow: `0 0 30px ${toast.color}40` }}>
+          {toast.msg}
+        </div>
+      )}
+
+      <main className="relative z-10 px-4 py-8 max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight mb-3">
+            <span style={{ color: '#ff00ff', textShadow: '0 0 30px rgba(255,0,255,0.5)' }}>BOUTIQUE</span>
+            <span className="text-white ml-3">DE SKINS</span>
+          </h1>
+          <p className="text-gray-500 text-sm font-mono mb-2">Personnalise ton joueur. Affirme ton style dans la Zone Glitch.</p>
+          <p className="text-gray-600 text-xs font-mono italic">"Chaque skin raconte une histoire. Quelle sera la tienne ?"</p>
+        </div>
+
+        {/* Filters */}
+        <div className="flex flex-wrap justify-center gap-2 mb-8">
+          <button onClick={() => setFilter('all')}
+            className={`px-4 py-2 rounded-lg text-xs font-bold tracking-wider transition-all ${filter === 'all' ? 'scale-105' : 'opacity-50 hover:opacity-80'}`}
+            style={{ background: filter === 'all' ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.04)', border: `1px solid ${filter === 'all' ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.08)'}`, color: '#fff' }}>
+            TOUS
+          </button>
+          {(Object.keys(RARITY) as Array<keyof typeof RARITY>).map(r => (
+            <button key={r} onClick={() => setFilter(r)}
+              className={`px-4 py-2 rounded-lg text-xs font-bold tracking-wider transition-all uppercase ${filter === r ? 'scale-105' : 'opacity-50 hover:opacity-80'}`}
+              style={{ background: filter === r ? RARITY[r].bg : 'rgba(255,255,255,0.04)', border: `1px solid ${filter === r ? RARITY[r].border : 'rgba(255,255,255,0.08)'}`, color: filter === r ? RARITY[r].text : '#666', boxShadow: filter === r ? `0 0 15px ${RARITY[r].glow}` : 'none' }}>
+              {RARITY[r].label}
+            </button>
+          ))}
+        </div>
+
+        {/* Skins Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+          {filtered.map(skin => {
+            const r = RARITY[skin.rarity];
+            const isOwned = owned.includes(skin.id);
+            const isBuying = buying === skin.id;
+            return (
+              <div key={skin.id}
+                className="group relative rounded-xl overflow-hidden transition-all duration-300 hover:scale-[1.02]"
+                style={{ background: `linear-gradient(135deg, ${r.bg} 0%, rgba(10,14,39,0.8) 100%)`, border: `1px solid ${r.border}`, boxShadow: `0 0 15px ${r.glow}` }}>
+                
+                {/* Preview */}
+                <div className="relative flex items-center justify-center py-8" style={{ background: 'rgba(5,8,24,0.5)' }}>
+                  <SkinPreview skin={skin} size={90} />
+                  <div className="absolute top-2 right-2 px-2 py-0.5 rounded-full text-[9px] font-bold tracking-wider uppercase"
+                    style={{ background: r.bg, color: r.text, border: `1px solid ${r.border}` }}>
+                    {r.label}
                   </div>
-                </div>
-                <Link href="/premium">
-                  <Button className="gap-2" style={{ background: 'linear-gradient(90deg, #ffff00, #ff6600)', color: '#050818' }}>
-                    <ShoppingCart className="w-4 h-4" />
-                    <span className="font-bold">ACHETER</span>
-                  </Button>
-                </Link>
-              </div>
-            </div>
-
-            {/* Rarity Filters */}
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => setSelectedRarity('all')}
-                className={`px-4 py-2 rounded-lg text-sm font-bold tracking-wider transition-all ${selectedRarity === 'all' ? 'scale-105' : 'opacity-60 hover:opacity-100'}`}
-                style={{
-                  background: selectedRarity === 'all' ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.05)',
-                  border: `1px solid ${selectedRarity === 'all' ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.1)'}`,
-                  color: '#fff',
-                }}
-              >
-                TOUS
-              </button>
-              {Object.entries(RARITY_COLORS).map(([rarity, colors]) => (
-                <button
-                  key={rarity}
-                  onClick={() => setSelectedRarity(rarity)}
-                  className={`px-4 py-2 rounded-lg text-sm font-bold tracking-wider transition-all uppercase ${selectedRarity === rarity ? 'scale-105' : 'opacity-60 hover:opacity-100'}`}
-                  style={{
-                    background: selectedRarity === rarity ? colors.bg : 'rgba(255,255,255,0.05)',
-                    border: `1px solid ${selectedRarity === rarity ? colors.border : 'rgba(255,255,255,0.1)'}`,
-                    color: selectedRarity === rarity ? colors.text : '#888',
-                    boxShadow: selectedRarity === rarity ? `0 0 20px ${colors.glow}` : 'none',
-                  }}
-                >
-                  {rarity}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Skins Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {filteredSkins.map((skin) => {
-              const isOwned = mySkinIds.has(skin.id);
-              const rarity = RARITY_COLORS[skin.rarity || 'common'];
-
-              return (
-                <Card
-                  key={skin.id}
-                  className="group relative overflow-hidden transition-all duration-300 hover:scale-[1.02]"
-                  style={{
-                    background: `linear-gradient(135deg, ${rarity.bg} 0%, rgba(13,18,48,0.6) 100%)`,
-                    border: `1px solid ${rarity.border}`,
-                    boxShadow: `0 0 20px ${rarity.glow}`,
-                  }}
-                >
-                  <CardContent className="p-0">
-                    {/* Skin Preview */}
-                    <div className="relative aspect-square p-6 flex items-center justify-center" style={{ background: 'rgba(5,8,24,0.5)' }}>
-                      {/* Placeholder for skin preview - would use SkinPreviewCanvas from GameComponents */}
-                      <div className="w-24 h-24 rounded-full" style={{
-                        background: `radial-gradient(circle, ${rarity.text} 0%, transparent 70%)`,
-                        boxShadow: `0 0 40px ${rarity.glow}, inset 0 0 30px ${rarity.glow}`,
-                      }} />
-                      
-                      {/* Rarity Badge */}
-                      <div className="absolute top-2 right-2">
-                        <Badge className="uppercase text-xs font-bold" style={{ background: rarity.bg, color: rarity.text, border: `1px solid ${rarity.border}` }}>
-                          {skin.rarity}
-                        </Badge>
-                      </div>
-
-                      {/* Owned Badge */}
-                      {isOwned && (
-                        <div className="absolute top-2 left-2">
-                          <div className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold" style={{ background: 'rgba(0,255,136,0.2)', color: '#00ff88', border: '1px solid rgba(0,255,136,0.3)' }}>
-                            <Check className="w-3 h-3" />
-                            <span>POSSÉDÉ</span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Skin Info */}
-                    <div className="p-4">
-                      <h3 className="font-black text-lg mb-1 tracking-wide" style={{ color: rarity.text }}>
-                        {skin.name}
-                      </h3>
-                      <p className="text-xs text-gray-500 mb-4 line-clamp-2">
-                        {skin.description || 'Skin exclusif pour personnaliser votre joueur'}
-                      </p>
-
-                      {/* Price & Action */}
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1.5">
-                          <Coins className="w-4 h-4" style={{ color: '#ffff00' }} />
-                          <span className="font-black text-lg" style={{ color: '#ffff00' }}>
-                            {skin.priceTokens}
-                          </span>
-                        </div>
-
-                        {isOwned ? (
-                          <Button size="sm" disabled className="gap-1.5" style={{ background: 'rgba(0,255,136,0.2)', color: '#00ff88', border: '1px solid rgba(0,255,136,0.3)' }}>
-                            <Check className="w-4 h-4" />
-                            <span className="font-bold">POSSÉDÉ</span>
-                          </Button>
-                        ) : (
-                          <Button
-                            size="sm"
-                            onClick={() => handlePurchase(skin.id, skin.priceTokens)}
-                            disabled={purchaseSkin.isPending || (tokenBalance || 0) < skin.priceTokens}
-                            className="gap-1.5"
-                            style={{
-                              background: (tokenBalance || 0) >= skin.priceTokens ? `linear-gradient(90deg, ${rarity.text}, ${rarity.text}CC)` : 'rgba(128,128,128,0.2)',
-                              color: (tokenBalance || 0) >= skin.priceTokens ? '#050818' : '#666',
-                              border: `1px solid ${(tokenBalance || 0) >= skin.priceTokens ? rarity.border : 'rgba(128,128,128,0.3)'}`,
-                            }}
-                          >
-                            {(tokenBalance || 0) < skin.priceTokens ? (
-                              <>
-                                <Lock className="w-4 h-4" />
-                                <span className="font-bold">LOCKED</span>
-                              </>
-                            ) : (
-                              <>
-                                <ShoppingCart className="w-4 h-4" />
-                                <span className="font-bold">ACHETER</span>
-                              </>
-                            )}
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-
-          {/* Empty State */}
-          {filteredSkins.length === 0 && (
-            <div className="text-center py-20">
-              <Sparkles className="w-16 h-16 mx-auto mb-4 opacity-20" style={{ color: '#ff00ff' }} />
-              <p className="text-gray-500 text-lg mb-2">Aucun skin disponible</p>
-              <p className="text-gray-600 text-sm">Revenez plus tard pour découvrir de nouveaux skins !</p>
-            </div>
-          )}
-
-          {/* Token Packs Section */}
-          <div className="mt-16 pt-12 border-t" style={{ borderColor: 'rgba(0,240,255,0.1)' }}>
-            <div className="text-center mb-8">
-              <h2 className="text-2xl sm:text-3xl font-black mb-2">
-                <span style={{ color: '#ffff00', textShadow: '0 0 30px rgba(255,255,0,0.5)' }}>PACKS</span>
-                <span className="text-white ml-2">DE TOKENS</span>
-              </h2>
-              <p className="text-gray-500 text-sm">Achetez des tokens pour débloquer vos skins préférés</p>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl mx-auto">
-              {[
-                { tokens: 100, price: 0.99, popular: false },
-                { tokens: 500, price: 3.99, popular: true },
-                { tokens: 1000, price: 6.99, popular: false },
-              ].map((pack) => (
-                <Card
-                  key={pack.tokens}
-                  className="relative overflow-hidden"
-                  style={{
-                    background: pack.popular ? 'linear-gradient(135deg, rgba(255,255,0,0.1) 0%, rgba(13,18,48,0.6) 100%)' : 'rgba(13,18,48,0.6)',
-                    border: pack.popular ? '2px solid rgba(255,255,0,0.4)' : '1px solid rgba(255,255,0,0.2)',
-                  }}
-                >
-                  {pack.popular && (
-                    <div className="absolute top-0 right-0 px-3 py-1 text-xs font-bold tracking-wider rounded-bl-lg" style={{ background: '#ffff00', color: '#050818' }}>
-                      POPULAIRE
+                  {isOwned && (
+                    <div className="absolute top-2 left-2 flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold"
+                      style={{ background: 'rgba(0,255,136,0.15)', color: '#00ff88', border: '1px solid rgba(0,255,136,0.3)' }}>
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                      POSSÉDÉ
                     </div>
                   )}
-                  <CardContent className="p-6 text-center">
-                    <Coins className="w-12 h-12 mx-auto mb-4" style={{ color: '#ffff00' }} />
-                    <p className="text-3xl font-black mb-2" style={{ color: '#ffff00', textShadow: '0 0 20px rgba(255,255,0,0.4)' }}>
-                      {pack.tokens}
-                    </p>
-                    <p className="text-sm text-gray-500 mb-4">TOKENS</p>
-                    <div className="mb-4">
-                      <span className="text-2xl font-black text-white">{pack.price}</span>
-                      <span className="text-gray-400 ml-1">&euro;</span>
+                </div>
+
+                {/* Info */}
+                <div className="p-4">
+                  <h3 className="font-black text-base mb-1 tracking-wide" style={{ color: r.text }}>{skin.name}</h3>
+                  <p className="text-gray-500 text-xs mb-4 leading-relaxed">{skin.description}</p>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="#ffff00"><circle cx="12" cy="12" r="10"/><text x="12" y="16" textAnchor="middle" fill="#050818" fontSize="12" fontWeight="bold">T</text></svg>
+                      <span className="font-black text-base" style={{ color: '#ffff00' }}>{skin.price === 0 ? 'GRATUIT' : skin.price}</span>
                     </div>
-                    <Link href="/premium">
-                      <Button className="w-full" style={{ background: pack.popular ? 'linear-gradient(90deg, #ffff00, #ff6600)' : 'rgba(255,255,0,0.2)', color: pack.popular ? '#050818' : '#ffff00' }}>
-                        <span className="font-bold">ACHETER</span>
-                      </Button>
-                    </Link>
-                  </CardContent>
-                </Card>
-              ))}
+                    {isOwned ? (
+                      <span className="px-3 py-1.5 rounded-lg text-xs font-bold" style={{ background: 'rgba(0,255,136,0.1)', color: '#00ff88', border: '1px solid rgba(0,255,136,0.2)' }}>ÉQUIPÉ</span>
+                    ) : (
+                      <button onClick={() => handleBuy(skin)}
+                        disabled={isBuying}
+                        className="px-4 py-1.5 rounded-lg text-xs font-bold tracking-wider transition-all hover:scale-105 active:scale-95"
+                        style={{ background: tokens >= skin.price ? `linear-gradient(135deg, ${skin.colors.primary}, ${skin.colors.secondary})` : 'rgba(255,255,255,0.05)', color: tokens >= skin.price ? '#050818' : '#666', border: tokens >= skin.price ? 'none' : '1px solid rgba(255,255,255,0.1)', boxShadow: tokens >= skin.price ? `0 0 15px ${r.glow}` : 'none' }}>
+                        {isBuying ? 'ACHAT...' : tokens >= skin.price ? 'ACHETER' : 'INSUFFISANT'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Info tokens */}
+        <div className="mt-12 text-center">
+          <div className="inline-block p-6 rounded-xl" style={{ background: 'rgba(255,255,0,0.04)', border: '1px solid rgba(255,255,0,0.15)' }}>
+            <p className="text-sm font-bold mb-2" style={{ color: '#ffff00' }}>COMMENT GAGNER DES TOKENS ?</p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs text-gray-400 font-mono">
+              <div><span style={{ color: '#00f0ff' }}>+10</span> par partie jouée</div>
+              <div><span style={{ color: '#00ff88' }}>+50</span> par nouveau record</div>
+              <div><span style={{ color: '#ff00ff' }}>+100</span> par succès débloqué</div>
             </div>
           </div>
         </div>
       </main>
+
+      {/* Footer */}
+      <footer className="border-t py-6 px-4 mt-8" style={{ borderColor: 'rgba(0,240,255,0.1)' }}>
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <img src={`${BASE}images/assets/logo-skull-icon.png`} alt="" className="w-6 h-6" style={{ filter: 'drop-shadow(0 0 6px rgba(255,0,255,0.5))' }} />
+            <span className="text-gray-600 text-xs font-mono">Fail Frenzy Studios 2026</span>
+          </div>
+          <div className="flex gap-4 text-gray-600 text-xs font-mono">
+            <Link href="/" className="hover:text-[#00f0ff] transition-colors">Accueil</Link>
+            <Link href="/game" className="hover:text-[#ff00ff] transition-colors">Jouer</Link>
+            <Link href="/leaderboard" className="hover:text-[#ffff00] transition-colors">Classement</Link>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

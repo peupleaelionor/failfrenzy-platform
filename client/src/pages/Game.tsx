@@ -5,8 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { Link } from 'wouter';
-import { useAuth } from "@/_core/hooks/useAuth";
-import { getLoginUrl } from "@/const";
+// Auth removed for standalone mode
 import { GameCanvas } from '@/game/GameComponents';
 import type { GameMode } from '@/game/FailFrenzyGame';
 import { AssetLoader, preloadAssets } from '@/game/AssetLoader';
@@ -16,7 +15,7 @@ const ASSETS = {
 };
 
 export default function Game() {
-  const { user, isAuthenticated } = useAuth();
+  const isAuthenticated = false; // Standalone mode
   const [selectedMode, setSelectedMode] = useState<GameMode | null>(null);
   const [gameStarted, setGameStarted] = useState(false);
   const [assets, setAssets] = useState<AssetLoader | null>(null);
@@ -113,17 +112,11 @@ export default function Game() {
           <div className="flex items-center gap-4">
             <Link href="/leaderboard" className="text-gray-400 hover:text-[#00f0ff] text-xs font-mono tracking-wider transition-colors hidden sm:block">CLASSEMENT</Link>
             <Link href="/shop" className="text-gray-400 hover:text-[#ff00ff] text-xs font-mono tracking-wider transition-colors hidden sm:block">BOUTIQUE</Link>
-            {isAuthenticated ? (
-              <Link href="/dashboard">
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ background: 'rgba(0,240,255,0.1)', border: '1px solid rgba(0,240,255,0.2)' }}>
-                  <span className="text-[#00f0ff] text-xs font-bold">{user?.name || 'JOUEUR'}</span>
-                </div>
-              </Link>
-            ) : (
-              <a href={getLoginUrl()} className="px-3 py-1.5 rounded-lg text-xs font-bold tracking-wider transition-all hover:scale-105" style={{ background: 'rgba(255,0,255,0.15)', border: '1px solid rgba(255,0,255,0.3)', color: '#ff00ff' }}>
-                CONNEXION
-              </a>
-            )}
+            <Link href="/dashboard">
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ background: 'rgba(0,240,255,0.1)', border: '1px solid rgba(0,240,255,0.2)' }}>
+                <span className="text-[#00f0ff] text-xs font-bold">PROFIL</span>
+              </div>
+            </Link>
           </div>
         </div>
       </nav>
@@ -282,14 +275,7 @@ export default function Game() {
             </div>
           )}
 
-          {/* Info message for non-authenticated users */}
-          {!isAuthenticated && (
-            <div className="mt-8 text-center">
-              <p className="text-gray-500 text-sm font-mono">
-                <a href={getLoginUrl()} className="text-[#00f0ff] hover:underline">Connectez-vous</a> pour sauvegarder vos scores et débloquer tous les modes
-              </p>
-            </div>
-          )}
+
         </div>
       </section>
 
