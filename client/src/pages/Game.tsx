@@ -166,15 +166,26 @@ export default function Game() {
 
         <div className="relative z-10 w-full max-w-5xl mx-auto">
           
-          {/* Logo Central + Title */}
-          <div className="text-center mb-10">
-            <div className="flex justify-center mb-6">
-              <img src={ASSETS.logo} alt="Fail Frenzy" className="w-40 h-40 sm:w-56 sm:h-56" style={{ filter: 'drop-shadow(0 0 40px rgba(0,240,255,0.6))' }} />
+          {/* Logo Central + Title — Phase 3 Imposing Version */}
+          <div className="text-center mb-12">
+            <div className="flex justify-center mb-8 relative">
+              {/* Massive Glow behind logo */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-cyan-500/20 blur-[80px] rounded-full animate-pulse" />
+              <img 
+                src={ASSETS.logo} 
+                alt="Fail Frenzy" 
+                className="w-56 h-56 sm:w-72 sm:h-72 relative z-10 object-contain" 
+                style={{ 
+                  filter: 'drop-shadow(0 0 50px rgba(0,240,255,0.8))',
+                  animation: 'float 4s ease-in-out infinite'
+                }} 
+              />
             </div>
-            <h1 className="text-5xl sm:text-6xl md:text-7xl font-black mb-3 tracking-tight" style={{
-              background: 'linear-gradient(90deg, #00f0ff 0%, #0080ff 25%, #ff00ff 75%, #ff0080 100%)',
+            <h1 className="text-6xl sm:text-7xl md:text-8xl font-black mb-4 tracking-tighter italic" style={{
+              background: 'linear-gradient(180deg, #ffffff 0%, #00f0ff 50%, #0080ff 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
+              filter: 'drop-shadow(0 0 20px rgba(0,240,255,0.4))'
             }}>
               SELECT MODE
             </h1>

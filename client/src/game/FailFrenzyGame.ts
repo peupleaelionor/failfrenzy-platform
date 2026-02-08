@@ -276,6 +276,13 @@ export class FailFrenzyGame {
   private shakeOffset: { x: number; y: number } = { x: 0, y: 0 };
   private shakeTimer: number = 0;
 
+  /**
+   * Trigger screen shake (Phase 3)
+   */
+  public shake(durationMs: number): void {
+    this.shakeTimer = Math.max(this.shakeTimer, durationMs);
+  }
+
   // Orbiter anchor points
   private orbiterAnchors: Map<string, { cx: number; cy: number; angle: number; radius: number }> = new Map();
 
@@ -371,6 +378,11 @@ export class FailFrenzyGame {
     this.featureManager = getIntegratedGameManager();
     this.featureManager.startRun();
     
+    // Phase 3: Expose game instance for external systems (shake, etc.)
+    if (typeof window !== 'undefined') {
+      (window as any).__FF_GAME = this;
+    }
+
     this.init();
   }
 
@@ -531,9 +543,16 @@ export class FailFrenzyGame {
     this.powerups.update(dt);
     this.vfxPool.update(dt);
 
-    // Update feature manager (XYLOS + messages)
+    // Update feature manager and apply narrative forces (Phase 3)
     if (this.player) {
-      this.featureManager.update(dt, this.player.x, this.player.y);
+      const effects = this.featureManager.update(dt, this.player.x, this.player.y);
+      if (effects && effects.length > 0) {
+        effects.forEach(effect => {
+          // Apply force to player position (gentle pull/push)
+          this.player!.x += effect.force.x * dt * 100;
+          this.player!.y += effect.force.y * dt * 100;
+        });
+      }
     }
 
     // Check difficulty label change

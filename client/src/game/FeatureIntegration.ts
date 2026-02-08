@@ -166,6 +166,11 @@ export class IntegratedGameManager {
     if (this.flags.dynamicMessages) {
       this.messages.show('fail');
     }
+
+    // Phase 3: Screen shake on fail
+    if (typeof window !== 'undefined' && (window as any).__FF_GAME) {
+      (window as any).__FF_GAME.shake(300);
+    }
   }
 
   /**
@@ -176,6 +181,11 @@ export class IntegratedGameManager {
     
     if (this.flags.dynamicMessages && combo >= 5 && combo % 5 === 0) {
       this.messages.show('skill');
+      
+      // Phase 3: Screen shake on skill
+      if (typeof window !== 'undefined' && (window as any).__FF_GAME) {
+        (window as any).__FF_GAME.shake(150);
+      }
     }
   }
 
