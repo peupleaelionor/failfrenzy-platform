@@ -94,14 +94,14 @@ export default function Home() {
         {/* Main content */}
         <div className="relative z-10 text-center max-w-4xl mx-auto">
           
-          {/* Logo Spectre du Vide */}
+          {/* Logo Skull Glitch */}
           <div className="mb-6 sm:mb-8 relative inline-block">
             <img 
               src={`${import.meta.env.BASE_URL}logo-skull-glitch.png`} 
               alt="Fail Frenzy: Echoes of the Void" 
-              className="w-32 h-32 sm:w-48 sm:h-48 mx-auto" 
+              className="w-36 h-36 sm:w-52 sm:h-52 mx-auto" 
               style={{
-                filter: `drop-shadow(0 0 20px rgba(255,0,255,0.8)) drop-shadow(0 0 40px rgba(0,240,255,0.6)) ${glitchActive ? 'hue-rotate(180deg)' : ''}`,
+                filter: `drop-shadow(0 0 25px rgba(255,0,255,0.8)) drop-shadow(0 0 50px rgba(0,240,255,0.6)) ${glitchActive ? 'hue-rotate(180deg)' : ''}`,
                 animation: 'skullPulse 4s ease-in-out infinite',
               }}
             />
@@ -143,9 +143,9 @@ export default function Home() {
           {/* Univers narratif - Le Briefing */}
           <div className="max-w-2xl mx-auto mb-10 sm:mb-12 px-4">
             <div className="relative p-6 rounded-xl" style={{ 
-              background: 'linear-gradient(135deg, rgba(255,0,255,0.08) 0%, rgba(0,240,255,0.05) 100%)',
-              border: '1px solid rgba(0,240,255,0.2)',
-              boxShadow: '0 0 30px rgba(0,240,255,0.1), inset 0 0 20px rgba(255,0,255,0.05)',
+              background: 'linear-gradient(135deg, rgba(255,0,255,0.12) 0%, rgba(0,240,255,0.08) 100%)',
+              border: '2px solid rgba(0,240,255,0.3)',
+              boxShadow: '0 0 40px rgba(0,240,255,0.15), inset 0 0 30px rgba(255,0,255,0.08)',
             }}>
               <div className="flex flex-col sm:flex-row items-center gap-6">
                 <img 
@@ -155,10 +155,10 @@ export default function Home() {
                   style={{ filter: 'drop-shadow(0 0 15px rgba(0,240,255,0.6))', animation: 'float 3s ease-in-out infinite' }}
                 />
                 <div className="text-center sm:text-left flex-1">
-                  <p className="text-gray-300 text-sm sm:text-base leading-relaxed mb-3 font-medium">
-                    L'univers s'éteint. En tant qu'<span style={{ color: '#00f0ff' }}>Écho-Pilote</span>, votre mission est vitale : traversez les courants du vide pour ramener les derniers échos de lumière stellaire vers <span style={{ color: '#ff00ff' }}>Xylos</span>.
+                  <p className="text-gray-200 text-sm sm:text-base leading-relaxed mb-3 font-medium">
+                    L'univers s'éteint. En tant qu'<span style={{ color: '#00f0ff', fontWeight: 900 }}>Écho-Pilote</span>, votre mission est vitale : traversez les courants du vide pour ramener les derniers échos de lumière stellaire vers <span style={{ color: '#ff00ff', fontWeight: 900 }}>Xylos</span>.
                   </p>
-                  <p className="text-gray-500 text-xs sm:text-sm italic">
+                  <p className="text-gray-400 text-xs sm:text-sm italic font-medium">
                     « L'échec n'est pas une fin, c'est le carburant de notre survie. »
                   </p>
                 </div>
@@ -166,33 +166,32 @@ export default function Home() {
             </div>
           </div>
 
-          {/* CTA Button */}
+          {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-12 sm:mb-16">
             <Link href="/game">
-              <button className="group relative px-10 py-4 bg-transparent border-2 border-[#00f0ff] rounded-full overflow-hidden transition-all duration-300 hover:scale-105 active:scale-95">
-                <div className="absolute inset-0 bg-[#00f0ff] opacity-0 group-hover:opacity-10 transition-opacity" />
-                <span className="relative text-xl font-black tracking-widest text-[#00f0ff]" style={{ textShadow: '0 0 10px rgba(0,240,255,0.5)' }}>
+              <button className="group relative px-12 py-5 border-3 border-[#00f0ff] rounded-full overflow-hidden transition-all duration-300 hover:scale-110 active:scale-95"
+                style={{ background: 'rgba(0,240,255,0.15)', border: '3px solid #00f0ff', boxShadow: '0 0 40px rgba(0,240,255,0.4)' }}>
+                <span className="relative text-xl sm:text-2xl font-black tracking-widest text-[#00f0ff]" style={{ textShadow: '0 0 15px rgba(0,240,255,0.8)' }}>
                   LANCER LA MISSION
                 </span>
-                <div className="absolute -inset-1 bg-[#00f0ff] opacity-20 blur-xl group-hover:opacity-40 transition-opacity" />
               </button>
             </Link>
             
             <Link href="/shop">
-              <button className="group relative px-10 py-4 bg-transparent border-2 border-[#ff00ff] rounded-full overflow-hidden transition-all duration-300 hover:scale-105 active:scale-95">
-                <div className="absolute inset-0 bg-[#ff00ff] opacity-0 group-hover:opacity-10 transition-opacity" />
-                <span className="relative text-xl font-black tracking-widest text-[#ff00ff]" style={{ textShadow: '0 0 10px rgba(255,0,255,0.5)' }}>
+              <button className="group relative px-12 py-5 border-3 border-[#ff00ff] rounded-full overflow-hidden transition-all duration-300 hover:scale-110 active:scale-95"
+                style={{ background: 'rgba(255,0,255,0.15)', border: '3px solid #ff00ff', boxShadow: '0 0 40px rgba(255,0,255,0.4)' }}>
+                <span className="relative text-xl sm:text-2xl font-black tracking-widest text-[#ff00ff]" style={{ textShadow: '0 0 15px rgba(255,0,255,0.8)' }}>
                   HANGAR DES VAISSEAUX
                 </span>
-                <div className="absolute -inset-1 bg-[#ff00ff] opacity-20 blur-xl group-hover:opacity-40 transition-opacity" />
               </button>
             </Link>
           </div>
 
           {/* High score */}
           {highScore > 0 && (
-            <div className="inline-block px-6 py-2 rounded-full border border-gray-800 bg-gray-900/50 text-gray-400 font-mono text-sm mb-12">
-              RECORD DE LUMIÈRE : <span className="text-[#ffff00] font-bold">{highScore.toLocaleString()}</span>
+            <div className="inline-block px-6 py-3 rounded-full mb-12" style={{ border: '2px solid rgba(255,215,0,0.4)', background: 'rgba(255,215,0,0.1)', boxShadow: '0 0 20px rgba(255,215,0,0.2)' }}>
+              <span className="text-gray-300 font-bold text-sm">RECORD DE LUMIÈRE : </span>
+              <span className="text-[#ffd700] font-black text-lg" style={{ textShadow: '0 0 10px rgba(255,215,0,0.6)' }}>{highScore.toLocaleString()}</span>
             </div>
           )}
         </div>

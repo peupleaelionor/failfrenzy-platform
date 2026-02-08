@@ -177,40 +177,39 @@ export default function Game() {
                 <button
                   key={mode.mode.name}
                   onClick={() => handleModeSelect(mode.mode)}
-                  className="group relative p-6 sm:p-8 rounded-xl border cursor-pointer transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] text-left"
+                  className="group relative p-6 sm:p-8 rounded-xl border-2 cursor-pointer transition-all duration-300 hover:scale-[1.03] active:scale-[0.98] text-left"
                   style={{
-                    background: `linear-gradient(135deg, ${mode.color}08 0%, #050818 100%)`,
-                    borderColor: `${mode.color}30`,
+                    background: `linear-gradient(135deg, ${mode.color}20 0%, rgba(5,8,24,0.8) 100%)`,
+                    borderColor: `${mode.color}`,
+                    boxShadow: `0 0 30px ${mode.color}40`,
                   }}
                   onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLElement).style.borderColor = `${mode.color}80`;
-                    (e.currentTarget as HTMLElement).style.boxShadow = `0 0 40px ${mode.color}20`;
+                    (e.currentTarget as HTMLElement).style.boxShadow = `0 0 50px ${mode.color}80, inset 0 0 30px ${mode.color}20`;
                   }}
                   onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLElement).style.borderColor = `${mode.color}30`;
-                    (e.currentTarget as HTMLElement).style.boxShadow = 'none';
+                    (e.currentTarget as HTMLElement).style.boxShadow = `0 0 30px ${mode.color}40`;
                   }}
                 >
                   <div className="flex items-start gap-4 mb-4">
-                    <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0"
-                      style={{ background: `${mode.color}15`, border: `1px solid ${mode.color}30` }}>
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={mode.color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <div className="w-14 h-14 rounded-lg flex items-center justify-center flex-shrink-0"
+                      style={{ background: `${mode.color}30`, border: `2px solid ${mode.color}`, boxShadow: `0 0 20px ${mode.color}50` }}>
+                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={mode.color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                         <path d={mode.icon} />
                       </svg>
                     </div>
                     <div className="flex-1">
-                      <h3 className="text-xl sm:text-2xl font-black tracking-wider mb-2" style={{ color: mode.color }}>
+                      <h3 className="text-2xl sm:text-3xl font-black tracking-wider mb-2" style={{ color: mode.color, textShadow: `0 0 20px ${mode.color}80` }}>
                         {mode.displayName}
                       </h3>
-                      <p className="text-gray-400 text-xs sm:text-sm leading-relaxed">
+                      <p className="text-gray-300 text-sm sm:text-base leading-relaxed font-medium">
                         {mode.desc}
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 text-xs font-bold tracking-wider opacity-0 group-hover:opacity-100 transition-opacity"
+                  <div className="flex items-center gap-2 text-sm font-bold tracking-wider opacity-70 group-hover:opacity-100 transition-opacity"
                     style={{ color: mode.color }}>
                     <span>SELECT MODE</span>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                       <path d="M5 12h14M12 5l7 7-7 7"/>
                     </svg>
                   </div>
@@ -218,53 +217,60 @@ export default function Game() {
               ))}
             </div>
           ) : (
-            // Mode Confirmation
+            // Mode Confirmation - BOUTONS ULTRA VISIBLES
             <div className="max-w-2xl mx-auto">
-              <div className="p-8 rounded-xl border-2 text-center"
+              <div className="p-10 rounded-2xl border-4 text-center"
                 style={{
-                  background: `linear-gradient(135deg, ${modes.find(m => m.mode === selectedMode)?.color}10 0%, #050818 100%)`,
-                  borderColor: `${modes.find(m => m.mode === selectedMode)?.color}50`,
-                  boxShadow: `0 0 60px ${modes.find(m => m.mode === selectedMode)?.color}15`,
+                  background: `linear-gradient(135deg, ${modes.find(m => m.mode === selectedMode)?.color}25 0%, rgba(5,8,24,0.95) 100%)`,
+                  borderColor: `${modes.find(m => m.mode === selectedMode)?.color}`,
+                  boxShadow: `0 0 80px ${modes.find(m => m.mode === selectedMode)?.color}60, inset 0 0 40px ${modes.find(m => m.mode === selectedMode)?.color}15`,
                 }}>
                 
-                <div className="w-20 h-20 rounded-full mx-auto mb-6 flex items-center justify-center"
+                <div className="w-24 h-24 rounded-full mx-auto mb-8 flex items-center justify-center"
                   style={{
-                    background: `${modes.find(m => m.mode === selectedMode)?.color}20`,
-                    border: `2px solid ${modes.find(m => m.mode === selectedMode)?.color}`,
-                    boxShadow: `0 0 30px ${modes.find(m => m.mode === selectedMode)?.color}40`,
+                    background: `${modes.find(m => m.mode === selectedMode)?.color}40`,
+                    border: `3px solid ${modes.find(m => m.mode === selectedMode)?.color}`,
+                    boxShadow: `0 0 40px ${modes.find(m => m.mode === selectedMode)?.color}80`,
                   }}>
-                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke={modes.find(m => m.mode === selectedMode)?.color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke={modes.find(m => m.mode === selectedMode)?.color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <path d={modes.find(m => m.mode === selectedMode)?.icon} />
                   </svg>
                 </div>
 
-                <h2 className="text-3xl sm:text-4xl font-black mb-3 tracking-wider"
-                  style={{ color: modes.find(m => m.mode === selectedMode)?.color }}>
+                <h2 className="text-4xl sm:text-5xl font-black mb-4 tracking-wider"
+                  style={{ color: modes.find(m => m.mode === selectedMode)?.color, textShadow: `0 0 30px ${modes.find(m => m.mode === selectedMode)?.color}` }}>
                   {modes.find(m => m.mode === selectedMode)?.displayName}
                 </h2>
-                <p className="text-gray-400 text-sm sm:text-base mb-8">
+                <p className="text-gray-200 text-base sm:text-lg mb-10 font-medium">
                   {modes.find(m => m.mode === selectedMode)?.desc}
                 </p>
 
-                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <div className="flex flex-col sm:flex-row gap-5 justify-center">
+                  {/* BOUTON START GAME - ULTRA VISIBLE */}
                   <button
                     onClick={handleStartGame}
-                    className="px-8 py-4 rounded-lg text-lg font-bold tracking-wider transition-all hover:scale-105 active:scale-95"
+                    disabled={isLoading}
+                    className="relative px-12 py-5 rounded-xl text-xl sm:text-2xl font-black tracking-widest transition-all hover:scale-110 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                     style={{
-                      background: `linear-gradient(90deg, ${modes.find(m => m.mode === selectedMode)?.color}, ${modes.find(m => m.mode === selectedMode)?.color}CC)`,
+                      background: `linear-gradient(135deg, ${modes.find(m => m.mode === selectedMode)?.color}, ${modes.find(m => m.mode === selectedMode)?.color}DD)`,
                       color: '#050818',
-                      boxShadow: `0 0 30px ${modes.find(m => m.mode === selectedMode)?.color}40`,
+                      boxShadow: `0 0 50px ${modes.find(m => m.mode === selectedMode)?.color}80, 0 10px 30px rgba(0,0,0,0.5)`,
+                      border: `3px solid ${modes.find(m => m.mode === selectedMode)?.color}`,
+                      textShadow: '0 2px 4px rgba(0,0,0,0.3)',
                     }}
                   >
-                    START GAME
+                    {isLoading ? `LOADING ${Math.round(loadProgress * 100)}%` : 'START GAME'}
                   </button>
+                  
+                  {/* BOUTON BACK - BIEN VISIBLE */}
                   <button
                     onClick={() => setSelectedMode(null)}
-                    className="px-8 py-4 rounded-lg text-lg font-bold tracking-wider transition-all hover:scale-105 active:scale-95"
+                    className="px-10 py-5 rounded-xl text-xl font-black tracking-widest transition-all hover:scale-105 active:scale-95"
                     style={{
-                      background: 'rgba(255,255,255,0.05)',
-                      border: '1px solid rgba(255,255,255,0.1)',
-                      color: '#fff',
+                      background: 'rgba(255,255,255,0.15)',
+                      border: '3px solid rgba(255,255,255,0.4)',
+                      color: '#ffffff',
+                      boxShadow: '0 0 30px rgba(255,255,255,0.2)',
                     }}
                   >
                     BACK

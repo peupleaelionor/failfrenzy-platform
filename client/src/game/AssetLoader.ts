@@ -25,9 +25,9 @@ export class AssetLoader {
     favicon: assetPath('01_BRANDING/Favicon_Simplifie.png'),
     
     // Legacy branding (backward compat)
-    logo_skull: assetPath('images/assets/logo-skull-512.png'),
-    skull_icon: assetPath('images/assets/logo-skull-256.png'),
-    skull_cropped: assetPath('images/assets/logo-skull-cropped.png'),
+    logo_skull: assetPath('logo-skull-glitch.png'),
+    skull_icon: assetPath('logo-skull-glitch.png'),
+    skull_cropped: assetPath('logo-skull-glitch.png'),
     
     // Vaisseaux (Skins)
     vaisseau_cyan: assetPath('02_SKINS_VAISSEAUX/COMMUN_Vaisseau_Cyan.png'),
