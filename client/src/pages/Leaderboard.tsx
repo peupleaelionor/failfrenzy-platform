@@ -107,7 +107,7 @@ export default function Leaderboard() {
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <Link href="/">
             <div className="flex items-center gap-2.5 cursor-pointer group">
-              <img src={`${BASE}images/assets/logo-skull-256.png`} alt="" className="w-8 h-auto transition-transform group-hover:rotate-12"
+              <img src={`${BASE}01_BRANDING/Logo_Principal_Skull_Glitch.png`} alt="" className="w-8 h-auto transition-transform group-hover:rotate-12"
                 style={{ filter: 'drop-shadow(0 0 8px rgba(0,240,255,0.5))' }} />
               <span className="text-lg font-black tracking-tight">
                 <span style={{ color: '#00f0ff' }}>FAIL</span>
@@ -125,13 +125,13 @@ export default function Leaderboard() {
       <main className="relative z-10 px-4 py-8 max-w-5xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <img src={`${BASE}images/assets/logo-skull-512.png`} alt="" className="w-16 h-auto mx-auto mb-4"
+          <img src={`${BASE}01_BRANDING/Logo_Principal_Skull_Glitch.png`} alt="" className="w-16 h-auto mx-auto mb-4"
             style={{ filter: 'drop-shadow(0 0 20px rgba(255,215,0,0.5))' }} />
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight mb-3">
             <span style={{ color: '#ffd700', textShadow: '0 0 30px rgba(255,215,0,0.5)' }}>CLASSEMENT</span>
             <span className="text-white ml-3">MONDIAL</span>
           </h1>
-          <p className="text-gray-500 text-sm font-mono">"Seuls les meilleurs survivent à la Zone Glitch."</p>
+          <p className="text-gray-500 text-sm font-mono">"Seuls les meilleurs survivent à le Vide Stellaire."</p>
         </div>
 
         {/* Mode filters */}
@@ -216,8 +216,8 @@ export default function Leaderboard() {
       <footer className="border-t py-6 px-4 mt-8" style={{ borderColor: 'rgba(0,240,255,0.1)' }}>
         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <img src={`${BASE}images/assets/logo-skull-icon.png`} alt="" className="w-6 h-6" style={{ filter: 'drop-shadow(0 0 6px rgba(255,0,255,0.5))' }} />
-            <span className="text-gray-600 text-xs font-mono">Fail Frenzy Studios 2026</span>
+            <img src={`${BASE}01_BRANDING/Favicon_Simplifie.png`} alt="" className="w-6 h-6" style={{ filter: 'drop-shadow(0 0 6px rgba(255,0,255,0.5))' }} />
+            <span className="text-gray-600 text-xs font-mono">Fail Frenzy: Échos du Vide © 2026</span>
           </div>
           <div className="flex gap-4 text-gray-600 text-xs font-mono">
             <Link href="/" className="hover:text-[#00f0ff] transition-colors">Accueil</Link>

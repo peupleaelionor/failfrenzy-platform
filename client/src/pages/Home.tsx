@@ -48,7 +48,7 @@ export default function Home() {
         {/* Animated space background */}
         <div className="absolute inset-0 overflow-hidden">
           <div className="absolute inset-0 opacity-40" style={{
-            backgroundImage: `url(${import.meta.env.BASE_URL}assets/03_ENVIRONNEMENTS/BG_Nebuleuse_Spatiale.png)`,
+            backgroundImage: `url(${import.meta.env.BASE_URL}03_ENVIRONNEMENTS/BG_Nebuleuse_Spatiale.png)`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             transform: `scale(${1.1 + scrollY * 0.0005}) translate(${mousePos.x * 10}px, ${mousePos.y * 10}px)`,
@@ -60,7 +60,7 @@ export default function Home() {
           {/* Planete X in the background */}
           <div className="absolute bottom-[-10%] right-[-10%] w-[60vw] h-[60vw] opacity-30"
             style={{
-              backgroundImage: `url(${import.meta.env.BASE_URL}assets/03_ENVIRONNEMENTS/Planete_X_Destination.png)`,
+              backgroundImage: `url(${import.meta.env.BASE_URL}03_ENVIRONNEMENTS/Planete_X_Destination.png)`,
               backgroundSize: 'contain',
               backgroundRepeat: 'no-repeat',
               backgroundPosition: 'center',
@@ -97,7 +97,7 @@ export default function Home() {
           {/* Logo Spectre du Vide */}
           <div className="mb-6 sm:mb-8 relative inline-block">
             <img 
-              src="/assets/01_BRANDING/Logo_Principal_Skull_Glitch.png" 
+              src={`${import.meta.env.BASE_URL}01_BRANDING/Logo_Principal_Skull_Glitch.png`} 
               alt="Fail Frenzy: Echoes of the Void" 
               className="w-32 h-32 sm:w-48 sm:h-48 mx-auto" 
               style={{
@@ -149,7 +149,7 @@ export default function Home() {
             }}>
               <div className="flex flex-col sm:flex-row items-center gap-6">
                 <img 
-                  src="/assets/02_SKINS_VAISSEAUX/COMMUN_Vaisseau_Cyan.png" 
+                  src={`${import.meta.env.BASE_URL}02_SKINS_VAISSEAUX/COMMUN_Vaisseau_Cyan.png`} 
                   alt="Vaisseau-Écho" 
                   className="w-24 h-24 flex-shrink-0" 
                   style={{ filter: 'drop-shadow(0 0 15px rgba(0,240,255,0.6))', animation: 'float 3s ease-in-out infinite' }}

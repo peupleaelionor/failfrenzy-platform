@@ -1,28 +1,28 @@
 {
-  "name": "Fail Frenzy: The Loop - Game Design Document",
-  "short_name": "Fail Frenzy GDD",
-  "description": "A hybrid-casual mobile game where failure is the main reward. Explore the complete game design document with interactive visuals.",
+  "name": "Fail Frenzy: \u00c9chos du Vide",
+  "short_name": "Fail Frenzy",
+  "description": "L'univers s'\u00e9teint. En tant qu'\u00c9cho-Pilote, traversez les courants du vide pour ramener les \u00e9chos de lumi\u00e8re stellaire vers Xylos.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "background_color": "#0a0e27",
-  "theme_color": "#00ffff",
+  "background_color": "#050818",
+  "theme_color": "#00f0ff",
   "icons": [
     {
-      "src": "/images/favicon.png",
+      "src": "/01_BRANDING/Favicon_Simplifie.png",
       "sizes": "64x64",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/images/logo-icon.png",
+      "src": "/01_BRANDING/Logo_Principal_Skull_Glitch.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/images/logo-main.png",
+      "src": "/01_BRANDING/Logo_Principal_Skull_Glitch.png",
       "sizes": "1024x1024",
       "type": "image/png",
       "purpose": "any"
@@ -30,13 +30,13 @@
   ],
   "screenshots": [
     {
-      "src": "/images/banner-social.png",
+      "src": "/05_MARKETING/Banniere_Marketing_Principale.png",
       "sizes": "1200x630",
       "type": "image/png",
       "form_factor": "wide"
     },
     {
-      "src": "/images/hero-glitch.png",
+      "src": "/05_MARKETING/AppStore_Screenshot.png",
       "sizes": "1024x1024",
       "type": "image/png",
       "form_factor": "narrow"
@@ -45,25 +45,25 @@
   "categories": ["games", "entertainment"],
   "shortcuts": [
     {
-      "name": "Game Overview",
-      "short_name": "Overview",
-      "description": "View the game overview and core concept",
-      "url": "/?section=overview",
+      "name": "Lancer la Mission",
+      "short_name": "Jouer",
+      "description": "Lancez votre Vaisseau-\u00c9cho dans le Vide",
+      "url": "/game",
       "icons": [
         {
-          "src": "/images/logo-icon.png",
+          "src": "/01_BRANDING/Favicon_Simplifie.png",
           "sizes": "192x192"
         }
       ]
     },
     {
-      "name": "Game Systems",
-      "short_name": "Systems",
-      "description": "Explore the game systems and mechanics",
-      "url": "/?section=systems",
+      "name": "Hangar des Vaisseaux",
+      "short_name": "Boutique",
+      "description": "Personnalisez votre Vaisseau-\u00c9cho",
+      "url": "/shop",
       "icons": [
         {
-          "src": "/images/logo-icon.png",
+          "src": "/01_BRANDING/Favicon_Simplifie.png",
           "sizes": "192x192"
         }
       ]
