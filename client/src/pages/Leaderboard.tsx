@@ -131,7 +131,7 @@ export default function Leaderboard() {
             <span style={{ color: '#ffd700', textShadow: '0 0 30px rgba(255,215,0,0.5)' }}>CLASSEMENT</span>
             <span className="text-white ml-3">MONDIAL</span>
           </h1>
-          <p className="text-gray-500 text-sm font-mono">"Seuls les meilleurs survivent à le Vide Stellaire."</p>
+          <p className="text-gray-500 text-sm font-mono">"Seuls les meilleurs survivent au Vide Stellaire."</p>
         </div>
 
         {/* Mode filters */}
