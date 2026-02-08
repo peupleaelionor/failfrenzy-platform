@@ -8,6 +8,7 @@ import Leaderboard from "./pages/Leaderboard";
 import Premium from "./pages/Premium";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import { AdminDashboard } from "./pages/AdminDashboard";
 
 function Router() {
   return (
@@ -20,6 +21,7 @@ function Router() {
       <Route path={"/premium"} component={Premium} />
       <Route path={"/login"} component={Login} />
       <Route path={"/signup"} component={Signup} />
+      <Route path={"/admin"} component={AdminDashboard} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>

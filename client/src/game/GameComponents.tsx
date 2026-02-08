@@ -17,6 +17,10 @@ import {
   generateLeaderboard, getCountryTop, getPlayerCountryRank, getPlayerEuropeRank,
   getContextualPhrase, getGameOverSubtext, getContinueSubtext, type LeaderboardEntry,
 } from './UXPhrases';
+import {
+  CinematicIntro, TutorialOverlay,
+  shouldShowTutorial, shouldShowCinematic, markCinematicSeen,
+} from './TutorialOverlay';
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -121,10 +125,82 @@ const GameOverScreen: React.FC<GameOverProps> = ({ score, fails, time, onRestart
     if (isSkinUnlocked(id)) { setSelectedSkin(id); setSkinId(id); }
   };
 
-  const share = () => {
-    const txt = `Fail Frenzy — Score ${score} | Fails ${fails} | ${time.toFixed(1)}s | #${cRank} France`;
-    if (navigator.share) navigator.share({ title: 'Fail Frenzy: The Loop', text: txt, url: location.href });
-    else navigator.clipboard.writeText(txt);
+  const share = async () => {
+    const txt = `Fail Frenzy: Échos du Vide — Score ${score} | Fails ${fails} | ${time.toFixed(1)}s | #${cRank} France | Galaxie ${score > 3000 ? 'Cœur de Xylos' : score > 2000 ? 'Abîme Violet' : score > 1000 ? 'Rift Doré' : 'Nébuleuse Alpha'}`;
+    // Try to generate share image
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = 600;
+      canvas.height = 315;
+      const ctx = canvas.getContext('2d')!;
+      // Background
+      const bg = ctx.createLinearGradient(0, 0, 600, 315);
+      bg.addColorStop(0, '#050818');
+      bg.addColorStop(0.5, '#0a0e27');
+      bg.addColorStop(1, '#050818');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, 600, 315);
+      // Stars
+      for (let i = 0; i < 40; i++) {
+        ctx.fillStyle = `rgba(0,240,255,${0.2 + Math.random() * 0.5})`;
+        ctx.beginPath();
+        ctx.arc(Math.random() * 600, Math.random() * 315, Math.random() * 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      // Grid
+      ctx.globalAlpha = 0.05;
+      ctx.strokeStyle = '#00f0ff';
+      for (let x = 0; x < 600; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 315); ctx.stroke(); }
+      for (let y = 0; y < 315; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(600, y); ctx.stroke(); }
+      ctx.globalAlpha = 1;
+      // Title
+      ctx.font = 'bold 28px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#00f0ff';
+      ctx.shadowBlur = 20;
+      ctx.shadowColor = '#00f0ff';
+      ctx.fillText('FAIL', 260, 50);
+      ctx.fillStyle = '#ff00ff';
+      ctx.shadowColor = '#ff00ff';
+      ctx.fillText('FRENZY', 370, 50);
+      ctx.shadowBlur = 0;
+      // Score
+      ctx.font = 'bold 72px monospace';
+      ctx.fillStyle = '#ffffff';
+      ctx.shadowBlur = 30;
+      ctx.shadowColor = '#00f0ff';
+      ctx.fillText(String(score), 300, 150);
+      ctx.shadowBlur = 0;
+      ctx.font = '14px monospace';
+      ctx.fillStyle = '#00f0ff';
+      ctx.fillText('POINTS', 300, 175);
+      // Stats
+      ctx.font = '16px monospace';
+      ctx.fillStyle = '#ffffff88';
+      ctx.fillText(`${fails} Fails  •  ${time.toFixed(1)}s  •  #${cRank} France`, 300, 210);
+      // Phrase
+      ctx.font = 'italic 14px monospace';
+      ctx.fillStyle = '#ffd700';
+      ctx.fillText(`"${phrase.text.substring(0, 50)}"`, 300, 250);
+      // CTA
+      ctx.font = 'bold 12px monospace';
+      ctx.fillStyle = '#ffffff44';
+      ctx.fillText('failfrenzy.com — Échos du Vide', 300, 295);
+      // Convert to blob and share
+      const blob = await new Promise<Blob>((r) => canvas.toBlob(b => r(b!), 'image/png'));
+      const file = new File([blob], 'failfrenzy-score.png', { type: 'image/png' });
+      if (navigator.share && navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ title: 'Fail Frenzy: Échos du Vide', text: txt, url: location.href, files: [file] });
+      } else if (navigator.share) {
+        await navigator.share({ title: 'Fail Frenzy: Échos du Vide', text: txt, url: location.href });
+      } else {
+        navigator.clipboard.writeText(txt);
+      }
+    } catch {
+      // Fallback to text share
+      if (navigator.share) navigator.share({ title: 'Fail Frenzy: Échos du Vide', text: txt, url: location.href });
+      else navigator.clipboard.writeText(txt);
+    }
   };
 
   const phraseColor = phrase.category === 'ego' ? '#ff2d7b' : phrase.category === 'pride' ? '#ffd700' : '#00f0ff';
@@ -194,11 +270,60 @@ const GameOverScreen: React.FC<GameOverProps> = ({ score, fails, time, onRestart
 
         {/* 7. CONTINUER (monetisation soft) */}
         <button onClick={onRestart}
-          className="w-full max-w-xs mx-auto block py-2.5 rounded-xl transition-all hover:scale-105 active:scale-95 mb-4"
+          className="w-full max-w-xs mx-auto block py-2.5 rounded-xl transition-all hover:scale-105 active:scale-95 mb-2"
           style={{ background: 'rgba(255,215,0,0.06)', border: '1px solid rgba(255,215,0,0.2)' }}>
           <span className="text-sm font-bold" style={{ color: '#ffd700' }}>CONTINUER</span>
           <span className="block text-[9px] font-mono mt-0.5" style={{ color: 'rgba(255,215,0,0.5)' }}>{contText} — Pub ou 1 token</span>
         </button>
+
+        {/* 7b. POPUP TOKENS — Soft monetization CTA */}
+        <div className="mb-3 rounded-xl overflow-hidden" style={{ background: 'linear-gradient(135deg, rgba(255,215,0,0.06), rgba(255,0,255,0.04))', border: '1px solid rgba(255,215,0,0.15)' }}>
+          <div className="px-3 py-2.5">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-[10px] font-bold tracking-wider" style={{ color: '#ffd700' }}>BESOIN DE TOKENS ?</span>
+              <span className="text-[8px] px-1.5 py-0.5 rounded-full font-bold" style={{ background: 'rgba(255,0,0,0.15)', color: '#ff4444', border: '1px solid rgba(255,0,0,0.2)' }}>HOT</span>
+            </div>
+            <p className="text-[9px] font-mono mb-2" style={{ color: 'rgba(255,255,255,0.4)' }}>Débloquez des skins exclusifs et soutenez le développement du jeu.</p>
+            <div className="grid grid-cols-3 gap-1.5">
+              <button className="py-2 rounded-lg text-center transition-all hover:scale-105"
+                style={{ background: 'rgba(0,240,255,0.08)', border: '1px solid rgba(0,240,255,0.2)' }}>
+                <span className="block text-sm font-black" style={{ color: '#00f0ff' }}>50</span>
+                <span className="block text-[7px] font-mono" style={{ color: 'rgba(255,255,255,0.3)' }}>0.99€</span>
+              </button>
+              <button className="py-2 rounded-lg text-center transition-all hover:scale-105 relative"
+                style={{ background: 'rgba(255,215,0,0.1)', border: '1px solid rgba(255,215,0,0.3)' }}>
+                <span className="absolute -top-1.5 left-1/2 -translate-x-1/2 text-[6px] px-1.5 py-0.5 rounded-full font-bold" style={{ background: '#ffd700', color: '#000' }}>POPULAIRE</span>
+                <span className="block text-sm font-black" style={{ color: '#ffd700' }}>200</span>
+                <span className="block text-[7px] font-mono" style={{ color: 'rgba(255,255,255,0.3)' }}>2.99€</span>
+              </button>
+              <button className="py-2 rounded-lg text-center transition-all hover:scale-105"
+                style={{ background: 'rgba(255,0,255,0.08)', border: '1px solid rgba(255,0,255,0.2)' }}>
+                <span className="block text-sm font-black" style={{ color: '#ff00ff' }}>500</span>
+                <span className="block text-[7px] font-mono" style={{ color: 'rgba(255,255,255,0.3)' }}>4.99€</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* 7c. OFFRE PREMIER ACHAT — First purchase discount */}
+        {!localStorage.getItem('failfrenzy_first_purchase') && (
+          <div className="mb-3 rounded-xl overflow-hidden animate-pulse"
+            style={{ background: 'linear-gradient(135deg, rgba(0,240,255,0.08), rgba(255,0,255,0.08))', border: '1px solid rgba(0,240,255,0.3)' }}>
+            <div className="px-3 py-2.5 text-center">
+              <div className="text-[10px] font-bold tracking-wider mb-1" style={{ color: '#00f0ff' }}>OFFRE DE BIENVENUE</div>
+              <div className="text-lg font-black mb-0.5">
+                <span style={{ color: '#ffd700' }}>300 TOKENS</span>
+                <span className="text-xs font-mono mx-1.5" style={{ color: 'rgba(255,255,255,0.3)', textDecoration: 'line-through' }}>4.99€</span>
+                <span className="text-base font-black" style={{ color: '#00ff88' }}>1.99€</span>
+              </div>
+              <p className="text-[8px] font-mono mb-2" style={{ color: 'rgba(255,255,255,0.3)' }}>-60% pour votre premier achat • Offre limitée</p>
+              <button className="w-full py-2 rounded-lg font-bold text-xs transition-all hover:scale-105"
+                style={{ background: 'linear-gradient(135deg, #00f0ff, #ff00ff)', color: '#000' }}>
+                DÉBLOQUER L'OFFRE
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* 8. SKIN PREVIEW */}
         <div className="mb-3">
@@ -449,6 +574,8 @@ export const GamePage: React.FC = () => {
   const [assets, setAssets] = useState<AssetLoader | null>(null);
   const [loadProgress, setLoadProgress] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [showCinematic, setShowCinematic] = useState(() => shouldShowCinematic());
+  const [showTutorial, setShowTutorial] = useState(false);
   const [highScore, setHighScore] = useState(() => {
     try {
       const d = localStorage.getItem('failfrenzy_highscores');
@@ -472,8 +599,26 @@ export const GamePage: React.FC = () => {
   const handleGameOver = (score: number) => { if (score > highScore) setHighScore(score); };
   const handleBackToMenu = () => setSelectedMode(null);
 
+  const handleCinematicComplete = useCallback(() => {
+    markCinematicSeen();
+    setShowCinematic(false);
+    if (shouldShowTutorial()) {
+      setShowTutorial(true);
+    }
+  }, []);
+
+  const handleTutorialComplete = useCallback(() => {
+    setShowTutorial(false);
+  }, []);
+
+  // Show cinematic on first visit
+  if (showCinematic) {
+    return <CinematicIntro onComplete={handleCinematicComplete} />;
+  }
+
   return (
     <div className="min-h-screen text-white overflow-hidden" style={{ background: '#050818' }}>
+      {showTutorial && <TutorialOverlay onComplete={handleTutorialComplete} />}
       <div className="fixed inset-0 pointer-events-none opacity-[0.02]"
         style={{ backgroundImage: 'linear-gradient(rgba(0,240,255,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(0,240,255,0.4) 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
 

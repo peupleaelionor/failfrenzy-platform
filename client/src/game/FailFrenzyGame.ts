@@ -71,6 +71,43 @@ interface ChromaticFlash {
 }
 
 // ============================================================
+// GALAXY & NARRATIVE SYSTEM
+// ============================================================
+
+interface Galaxy {
+  name: string;
+  color: string;
+  bgGradient: [string, string, string];
+  gridColor: string;
+  starDensity: number;
+}
+
+const GALAXIES: Galaxy[] = [
+  { name: 'NÉBULEUSE ALPHA', color: '#00f0ff', bgGradient: ['#050818', '#0a0e27', '#050818'], gridColor: '#00f0ff', starDensity: 30 },
+  { name: 'SECTEUR VERMILLON', color: '#ff4444', bgGradient: ['#180505', '#270a0e', '#180505'], gridColor: '#ff4444', starDensity: 40 },
+  { name: 'VORTEX ÉMERAUDE', color: '#00ff88', bgGradient: ['#051808', '#0a270e', '#051808'], gridColor: '#00ff88', starDensity: 50 },
+  { name: 'RIFT DORÉ', color: '#ffd700', bgGradient: ['#181205', '#27200a', '#181205'], gridColor: '#ffd700', starDensity: 60 },
+  { name: 'ABÎME VIOLET', color: '#bb44ff', bgGradient: ['#0d0518', '#150a27', '#0d0518'], gridColor: '#bb44ff', starDensity: 70 },
+  { name: 'CŒUR DE XYLOS', color: '#ff00ff', bgGradient: ['#180518', '#270a27', '#180518'], gridColor: '#ff00ff', starDensity: 80 },
+];
+
+interface BlackHole {
+  entity: Entity;
+  pullRadius: number;
+  rotationSpeed: number;
+  warningTimer: number;
+  active: boolean;
+}
+
+interface BackgroundStar {
+  x: number;
+  y: number;
+  size: number;
+  speed: number;
+  alpha: number;
+}
+
+// ============================================================
 // OBSTACLE COLORS & SHAPES
 // ============================================================
 
@@ -254,6 +291,31 @@ export class FailFrenzyGame {
   // localStorage
   private highScores: Map<string, number> = new Map();
 
+  // === PHASE 1: NEW MECHANICS ===
+  // Galaxy system
+  private currentGalaxy: number = 0;
+  private galaxyTransition: { active: boolean; timer: number; from: number; to: number } = { active: false, timer: 0, from: 0, to: 0 };
+  private backgroundStars: BackgroundStar[] = [];
+  private showGalaxyLabel: number = 0;
+
+  // Black holes
+  private blackHoles: BlackHole[] = [];
+  private blackHoleSpawnTimer: number = 0;
+
+  // Xylos energy gauge
+  private xylosEnergy: number = 0;
+  private xylosMaxEnergy: number = 100;
+  private xylosGaugeFlash: number = 0;
+
+  // Shield system (3 hits)
+  private shieldHP: number = 3;
+  private maxShieldHP: number = 3;
+  private shieldRegenTimer: number = 0;
+  private shieldFlash: number = 0;
+
+  // Energy stars collected count
+  private energyStarsCollected: number = 0;
+
   constructor(canvasId: string, mode: GameMode, assets: AssetLoader) {
     this.assets = assets;
     this.cfg = getConfig();
@@ -299,7 +361,22 @@ export class FailFrenzyGame {
 
     this.activeSkin = getSelectedSkin();
     this.loadHighScores();
+    this.initBackgroundStars();
     this.init();
+  }
+
+  private initBackgroundStars(): void {
+    this.backgroundStars = [];
+    const galaxy = GALAXIES[this.currentGalaxy];
+    for (let i = 0; i < galaxy.starDensity; i++) {
+      this.backgroundStars.push({
+        x: Math.random() * 800,
+        y: Math.random() * 600,
+        size: 0.5 + Math.random() * 2,
+        speed: 20 + Math.random() * 60,
+        alpha: 0.3 + Math.random() * 0.7,
+      });
+    }
   }
 
   private init(): void {
@@ -512,6 +589,47 @@ export class FailFrenzyGame {
       this.powerUpSpawnTimer = 0;
     }
 
+    // === PHASE 1: Black hole spawning ===
+    this.blackHoleSpawnTimer += dt;
+    if (this.blackHoleSpawnTimer >= 25 + Math.random() * 15) {
+      this.spawnBlackHole();
+      this.blackHoleSpawnTimer = 0;
+    }
+
+    // Update black holes
+    this.updateBlackHoles(dt);
+
+    // Update background stars
+    this.updateBackgroundStars(dt);
+
+    // Shield regen (1 HP every 30s if below max)
+    if (this.shieldHP < this.maxShieldHP) {
+      this.shieldRegenTimer += dt;
+      if (this.shieldRegenTimer >= 30) {
+        this.shieldHP = Math.min(this.maxShieldHP, this.shieldHP + 1);
+        this.shieldRegenTimer = 0;
+        this.shieldFlash = 1.0;
+      }
+    }
+    if (this.shieldFlash > 0) this.shieldFlash -= dt * 2;
+
+    // Xylos gauge flash
+    if (this.xylosGaugeFlash > 0) this.xylosGaugeFlash -= dt * 3;
+
+    // Galaxy label
+    if (this.showGalaxyLabel > 0) this.showGalaxyLabel -= dt;
+
+    // Galaxy transition
+    if (this.galaxyTransition.active) {
+      this.galaxyTransition.timer -= dt;
+      if (this.galaxyTransition.timer <= 0) {
+        this.galaxyTransition.active = false;
+        this.currentGalaxy = this.galaxyTransition.to;
+        this.initBackgroundStars();
+        this.showGalaxyLabel = 3.0;
+      }
+    }
+
     // Update entities
     if (this.player) this.updatePlayer(dt);
     this.updateObstacles(dt);
@@ -656,6 +774,125 @@ export class FailFrenzyGame {
 
     this.engine.addEntity(collectible);
     this.collectibles.push(collectible);
+  }
+
+  // ==================== BLACK HOLES ====================
+
+  private spawnBlackHole(): void {
+    const y = 80 + Math.random() * 440;
+    const blackHoleEntity: Entity = {
+      id: `bh-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      type: 'blackhole',
+      x: 850,
+      y,
+      width: 60,
+      height: 60,
+      velocity: { x: 0, y: 0 },
+      acceleration: { x: 0, y: 0 },
+      rotation: 0,
+      scale: 1,
+      alive: true,
+      color: '#000000',
+      components: new Map<string, any>([['collisionShape', 'circle']]),
+    };
+    this.engine.addEntity(blackHoleEntity);
+    this.blackHoles.push({
+      entity: blackHoleEntity,
+      pullRadius: 120,
+      rotationSpeed: 3 + Math.random() * 2,
+      warningTimer: 1.5,
+      active: true,
+    });
+  }
+
+  private updateBlackHoles(dt: number): void {
+    const baseSpeed = this.difficulty.getObstacleSpeed() * 0.6;
+
+    for (let i = this.blackHoles.length - 1; i >= 0; i--) {
+      const bh = this.blackHoles[i];
+      bh.entity.x -= baseSpeed * dt;
+      bh.entity.rotation += bh.rotationSpeed * dt;
+
+      // Gravitational pull on player
+      if (this.player && bh.active) {
+        const dx = bh.entity.x - this.player.x;
+        const dy = bh.entity.y - this.player.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < bh.pullRadius && dist > 5) {
+          const force = (1 - dist / bh.pullRadius) * 80 * dt;
+          this.player.x += (dx / dist) * force;
+          this.player.y += (dy / dist) * force;
+        }
+      }
+
+      // Remove off-screen and trigger galaxy change
+      if (bh.entity.x < -100) {
+        // Successfully dodged: trigger galaxy transition
+        this.triggerGalaxyChange();
+        this.combo.addScore('dodge', bh.entity.x + 100, bh.entity.y);
+        this.engine.removeEntity(bh.entity.id);
+        this.blackHoles.splice(i, 1);
+      }
+    }
+  }
+
+  private triggerGalaxyChange(): void {
+    if (this.galaxyTransition.active) return;
+    const nextGalaxy = Math.min(this.currentGalaxy + 1, GALAXIES.length - 1);
+    if (nextGalaxy === this.currentGalaxy) return;
+    this.galaxyTransition = {
+      active: true,
+      timer: 1.0,
+      from: this.currentGalaxy,
+      to: nextGalaxy,
+    };
+    this.screenFlash = { color: GALAXIES[nextGalaxy].color, alpha: 0.5 };
+    if (this.player) {
+      this.particles.confetti(this.player.x, this.player.y);
+    }
+    // Bonus energy for galaxy change
+    this.addXylosEnergy(15);
+  }
+
+  // ==================== BACKGROUND STARS ====================
+
+  private updateBackgroundStars(dt: number): void {
+    for (const star of this.backgroundStars) {
+      star.x -= star.speed * dt;
+      if (star.x < -5) {
+        star.x = 810;
+        star.y = Math.random() * 600;
+        star.alpha = 0.3 + Math.random() * 0.7;
+      }
+    }
+  }
+
+  // ==================== XYLOS ENERGY ====================
+
+  private addXylosEnergy(amount: number): void {
+    this.xylosEnergy = Math.min(this.xylosMaxEnergy, this.xylosEnergy + amount);
+    this.xylosGaugeFlash = 1.0;
+    // Check if Xylos is fully charged
+    if (this.xylosEnergy >= this.xylosMaxEnergy) {
+      this.onXylosFullyCharged();
+    }
+  }
+
+  private onXylosFullyCharged(): void {
+    // Massive bonus + shield restore + visual celebration
+    this.combo.addScore('powerup', 400, 300);
+    this.combo.addScore('powerup', 400, 300);
+    this.combo.addScore('powerup', 400, 300);
+    this.shieldHP = this.maxShieldHP;
+    this.shieldFlash = 2.0;
+    this.screenFlash = { color: '#ffd700', alpha: 0.6 };
+    if (this.player) {
+      this.particles.confetti(this.player.x, this.player.y);
+      this.vfxPool.emit(this.player.x, this.player.y, 30, '#ffd700', 100, 400, 2, 8, 0.5, 1.2, 0);
+    }
+    this.audio.playSuccess();
+    // Reset energy for next cycle
+    this.xylosEnergy = 0;
   }
 
   private spawnPowerUp(): void {
@@ -853,6 +1090,26 @@ export class FailFrenzyGame {
       }
     }
 
+    // Black hole collisions
+    for (let i = this.blackHoles.length - 1; i >= 0; i--) {
+      const bh = this.blackHoles[i];
+      if (this.simpleCollision(this.player, bh.entity)) {
+        if (!isInvincible && !isGhost) {
+          // Black hole = instant game over with dramatic effect
+          this.spawnCollisionFeedback(
+            (this.player.x + bh.entity.x) / 2,
+            (this.player.y + bh.entity.y) / 2,
+            'orbiter'
+          );
+          this.shieldHP = 0; // Black hole bypasses shields
+          this.screenFlash = { color: '#8800ff', alpha: 0.8 };
+          this.chromaFlash = { intensity: 15, duration: 0.5, elapsed: 0 };
+          this.gameOver(false);
+          return;
+        }
+      }
+    }
+
     // Clean dead obstacles
     this.obstacles = this.obstacles.filter(o => o.alive);
   }
@@ -909,6 +1166,9 @@ export class FailFrenzyGame {
     this.combo.addScore('collect', collectible.x, collectible.y);
     this.particles.sparkle(collectible.x, collectible.y, NeonRenderer.COLORS.YELLOW);
     this.audio.playCollect();
+    // Phase 1: Energy stars feed Xylos
+    this.energyStarsCollected++;
+    this.addXylosEnergy(5);
   }
 
   private activatePowerUp(powerUp: Entity): void {
@@ -947,6 +1207,26 @@ export class FailFrenzyGame {
     if (!this.player) return;
     const state = this.engine.getState();
 
+    // Phase 1: Shield system absorbs hits
+    if (this.shieldHP > 0) {
+      this.shieldHP--;
+      this.shieldFlash = 1.5;
+      this.shieldRegenTimer = 0;
+      // Shield absorb effects (lighter than full fail)
+      this.engine.shake(10);
+      this.particles.explosion(this.player.x, this.player.y, '#00aaff');
+      this.renderer.spawnShockwave(this.player.x, this.player.y, '#00aaff');
+      this.audio.playFail();
+      this.screenFlash = { color: '#0088ff', alpha: 0.25 };
+      // Brief invincibility after shield hit
+      this.player.components.set('invincible', true);
+      setTimeout(() => {
+        if (this.player) this.player.components.set('invincible', false);
+      }, 800);
+      return;
+    }
+
+    // No shield left: real fail
     this.engine.setState({ fails: state.fails + 1 });
     this.combo.breakCombo();
     this.difficulty.recordFail();
@@ -1047,6 +1327,9 @@ export class FailFrenzyGame {
     // Render legacy particles
     this.particles.render(ctx, this.renderer);
 
+    // Render black holes
+    this.renderBlackHoles(ctx, state.time);
+
     // Render shockwaves
     this.renderer.drawShockwaves();
 
@@ -1063,6 +1346,15 @@ export class FailFrenzyGame {
       this.renderScanlines(ctx, w, h);
     }
 
+    // Render shield indicators around player
+    this.renderShieldIndicator(ctx, state.time);
+
+    // Render Xylos energy gauge
+    this.renderXylosGauge(ctx, w, h, state.time);
+
+    // Render galaxy label
+    this.renderGalaxyLabel(ctx, w, h);
+
     // Render UI
     this.renderUI(ctx, state, w, h);
 
@@ -1077,17 +1369,43 @@ export class FailFrenzyGame {
   // ==================== BACKGROUND ====================
 
   private renderBackground(ctx: CanvasRenderingContext2D, w: number, h: number, time: number): void {
+    const galaxy = GALAXIES[this.currentGalaxy];
+    const grad = galaxy.bgGradient;
+
+    // Galaxy transition blend
+    if (this.galaxyTransition.active) {
+      const progress = 1 - (this.galaxyTransition.timer / 1.0);
+      const fromG = GALAXIES[this.galaxyTransition.from].bgGradient;
+      const toG = GALAXIES[this.galaxyTransition.to].bgGradient;
+      // Flash white during transition
+      ctx.fillStyle = `rgba(255,255,255,${Math.sin(progress * Math.PI) * 0.3})`;
+      ctx.fillRect(0, 0, w, h);
+    }
+
     const bgGrad = ctx.createLinearGradient(0, 0, 0, h);
-    bgGrad.addColorStop(0, '#050818');
-    bgGrad.addColorStop(0.5, '#0a0e27');
-    bgGrad.addColorStop(1, '#050818');
+    bgGrad.addColorStop(0, grad[0]);
+    bgGrad.addColorStop(0.5, grad[1]);
+    bgGrad.addColorStop(1, grad[2]);
     ctx.fillStyle = bgGrad;
     ctx.fillRect(0, 0, w, h);
 
-    // Animated grid
+    // Background stars (parallax)
+    for (const star of this.backgroundStars) {
+      ctx.save();
+      ctx.globalAlpha = star.alpha * (0.5 + Math.sin(time * 2 + star.x) * 0.5);
+      ctx.fillStyle = galaxy.color;
+      ctx.shadowBlur = star.size * 3;
+      ctx.shadowColor = galaxy.color;
+      ctx.beginPath();
+      ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // Animated grid with galaxy color
     ctx.save();
     ctx.globalAlpha = 0.06 + this.backgroundPulse;
-    ctx.strokeStyle = '#00f0ff';
+    ctx.strokeStyle = galaxy.gridColor;
     ctx.lineWidth = 0.5;
 
     const gridSize = 50;
@@ -1107,10 +1425,10 @@ export class FailFrenzyGame {
     }
     ctx.restore();
 
-    // Horizon glow
+    // Horizon glow with galaxy color
     ctx.save();
     const horizonGrad = ctx.createRadialGradient(w / 2, h, 0, w / 2, h, h * 0.8);
-    horizonGrad.addColorStop(0, 'rgba(0,240,255,0.04)');
+    horizonGrad.addColorStop(0, galaxy.color + '0a');
     horizonGrad.addColorStop(0.5, 'rgba(255,0,255,0.02)');
     horizonGrad.addColorStop(1, 'transparent');
     ctx.fillStyle = horizonGrad;
@@ -2022,6 +2340,203 @@ export class FailFrenzyGame {
     ctx.restore();
   }
 
+  // ==================== BLACK HOLE RENDERING ====================
+
+  private renderBlackHoles(ctx: CanvasRenderingContext2D, time: number): void {
+    for (const bh of this.blackHoles) {
+      const e = bh.entity;
+      ctx.save();
+      ctx.translate(e.x, e.y);
+
+      // Pull radius indicator (danger zone)
+      ctx.save();
+      ctx.globalAlpha = 0.08 + Math.sin(time * 3) * 0.04;
+      const pullGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, bh.pullRadius);
+      pullGrad.addColorStop(0, 'rgba(128,0,255,0.3)');
+      pullGrad.addColorStop(0.7, 'rgba(128,0,255,0.05)');
+      pullGrad.addColorStop(1, 'transparent');
+      ctx.fillStyle = pullGrad;
+      ctx.beginPath();
+      ctx.arc(0, 0, bh.pullRadius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      // Accretion disk (spinning rings)
+      for (let ring = 3; ring >= 1; ring--) {
+        ctx.save();
+        ctx.rotate(e.rotation * (ring % 2 === 0 ? 1 : -1));
+        ctx.globalAlpha = 0.3 + ring * 0.1;
+        ctx.strokeStyle = ring === 3 ? '#8800ff' : ring === 2 ? '#ff00ff' : '#ff4400';
+        ctx.lineWidth = 2;
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = ctx.strokeStyle;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, e.width / 2 + ring * 8, (e.width / 2 + ring * 8) * 0.4, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // Event horizon (black center)
+      ctx.save();
+      const bhGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, e.width / 2);
+      bhGrad.addColorStop(0, '#000000');
+      bhGrad.addColorStop(0.6, '#110022');
+      bhGrad.addColorStop(1, 'transparent');
+      ctx.fillStyle = bhGrad;
+      ctx.beginPath();
+      ctx.arc(0, 0, e.width / 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      // Core singularity glow
+      ctx.save();
+      ctx.globalAlpha = 0.6 + Math.sin(time * 5) * 0.3;
+      ctx.fillStyle = '#8800ff';
+      ctx.shadowBlur = 30;
+      ctx.shadowColor = '#8800ff';
+      ctx.beginPath();
+      ctx.arc(0, 0, 5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      // Warning text
+      ctx.save();
+      ctx.globalAlpha = 0.5 + Math.sin(time * 4) * 0.3;
+      ctx.font = 'bold 9px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#ff4400';
+      ctx.shadowBlur = 8;
+      ctx.shadowColor = '#ff4400';
+      ctx.fillText('TROU NOIR', 0, -e.width / 2 - 12);
+      ctx.restore();
+
+      ctx.restore();
+    }
+  }
+
+  // ==================== SHIELD INDICATOR ====================
+
+  private renderShieldIndicator(ctx: CanvasRenderingContext2D, time: number): void {
+    if (!this.player) return;
+
+    // Shield orbs around player
+    for (let i = 0; i < this.maxShieldHP; i++) {
+      const active = i < this.shieldHP;
+      const angle = (Math.PI * 2 / this.maxShieldHP) * i + time * 1.5;
+      const dist = this.player.width * 0.9;
+      const ox = this.player.x + Math.cos(angle) * dist;
+      const oy = this.player.y + Math.sin(angle) * dist;
+
+      ctx.save();
+      ctx.translate(ox, oy);
+      ctx.globalAlpha = active ? (0.7 + Math.sin(time * 3 + i) * 0.2) : 0.15;
+      ctx.fillStyle = active ? '#00aaff' : '#333';
+      ctx.shadowBlur = active ? 12 : 0;
+      ctx.shadowColor = '#00aaff';
+      ctx.beginPath();
+      ctx.arc(0, 0, 5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Shield flash effect
+      if (active && this.shieldFlash > 0) {
+        ctx.globalAlpha = this.shieldFlash * 0.5;
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(0, 0, 8, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    // Shield HP text
+    ctx.save();
+    ctx.font = 'bold 10px monospace';
+    ctx.textAlign = 'left';
+    ctx.fillStyle = this.shieldHP > 0 ? '#00aaff' : '#ff4444';
+    ctx.shadowBlur = 6;
+    ctx.shadowColor = ctx.fillStyle;
+    ctx.fillText(`BOUCLIER ${this.shieldHP}/${this.maxShieldHP}`, 20, 75);
+    ctx.shadowBlur = 0;
+    ctx.restore();
+  }
+
+  // ==================== XYLOS ENERGY GAUGE ====================
+
+  private renderXylosGauge(ctx: CanvasRenderingContext2D, w: number, h: number, time: number): void {
+    const barW = 200;
+    const barH = 10;
+    const barX = (w - barW) / 2;
+    const barY = h - 25;
+    const progress = this.xylosEnergy / this.xylosMaxEnergy;
+    const galaxy = GALAXIES[this.currentGalaxy];
+
+    // Background
+    ctx.save();
+    ctx.globalAlpha = 0.4;
+    ctx.fillStyle = '#111';
+    ctx.strokeStyle = galaxy.color + '40';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.roundRect(barX, barY, barW, barH, 5);
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+
+    // Fill
+    if (progress > 0) {
+      ctx.save();
+      const fillGrad = ctx.createLinearGradient(barX, 0, barX + barW * progress, 0);
+      fillGrad.addColorStop(0, '#00f0ff');
+      fillGrad.addColorStop(0.5, '#ff00ff');
+      fillGrad.addColorStop(1, '#ffd700');
+      ctx.fillStyle = fillGrad;
+      ctx.shadowBlur = this.xylosGaugeFlash > 0 ? 20 : 8;
+      ctx.shadowColor = '#00f0ff';
+      ctx.beginPath();
+      ctx.roundRect(barX, barY, barW * progress, barH, 5);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // Label
+    ctx.save();
+    ctx.font = 'bold 8px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#ffffff88';
+    ctx.fillText(`XYLOS ${Math.round(progress * 100)}%`, w / 2, barY - 4);
+    ctx.restore();
+
+    // Stars collected indicator
+    ctx.save();
+    ctx.font = '8px monospace';
+    ctx.textAlign = 'right';
+    ctx.fillStyle = NeonRenderer.COLORS.YELLOW;
+    ctx.fillText(`\u2605 ${this.energyStarsCollected}`, barX + barW, barY - 4);
+    ctx.restore();
+  }
+
+  // ==================== GALAXY LABEL ====================
+
+  private renderGalaxyLabel(ctx: CanvasRenderingContext2D, w: number, h: number): void {
+    if (this.showGalaxyLabel <= 0) return;
+    const galaxy = GALAXIES[this.currentGalaxy];
+
+    ctx.save();
+    ctx.globalAlpha = Math.min(1, this.showGalaxyLabel);
+    ctx.font = 'bold 24px "Press Start 2P", monospace';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = galaxy.color;
+    ctx.shadowBlur = 30;
+    ctx.shadowColor = galaxy.color;
+    ctx.fillText(galaxy.name, w / 2, h / 2 - 80);
+
+    ctx.font = '12px monospace';
+    ctx.fillStyle = '#ffffff88';
+    ctx.shadowBlur = 0;
+    ctx.fillText('NOUVELLE GALAXIE D\u00c9COUVERTE', w / 2, h / 2 - 55);
+    ctx.restore();
+  }
+
   // ==================== GAME STATE ====================
 
   private gameOver(success: boolean): void {
@@ -2110,6 +2625,20 @@ export class FailFrenzyGame {
     this.screenFlash = null;
     this.difficultyLabel = 'EASY';
     this.showDifficultyLabel = 0;
+    // Phase 1: Reset new mechanics
+    this.blackHoles.forEach(bh => this.engine.removeEntity(bh.entity.id));
+    this.blackHoles = [];
+    this.blackHoleSpawnTimer = 0;
+    this.currentGalaxy = 0;
+    this.galaxyTransition = { active: false, timer: 0, from: 0, to: 0 };
+    this.showGalaxyLabel = 0;
+    this.xylosEnergy = 0;
+    this.xylosGaugeFlash = 0;
+    this.shieldHP = this.maxShieldHP;
+    this.shieldRegenTimer = 0;
+    this.shieldFlash = 0;
+    this.energyStarsCollected = 0;
+    this.initBackgroundStars();
     this.createPlayer();
   }
 
