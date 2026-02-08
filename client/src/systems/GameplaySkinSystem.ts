@@ -18,6 +18,9 @@ export interface SkinModifiers {
   scoreMultiplier: number;        // 1.0 = normal
   xylosEchoMultiplier: number;    // 1.0 = normal
   
+  // Movement & Speed
+  speedMultiplier: number;        // 1.0 = normal, 1.2 = faster
+  
   // Combat & Défense
   shieldStrength: number;         // 1.0 = normal, 0.5 = fragile
   damageMultiplier: number;       // 1.0 = normal, 1.5 = plus sévère
@@ -29,6 +32,7 @@ export interface SkinModifiers {
   // Power-ups & Collectibles
   powerUpSpawnRate: number;       // 1.0 = normal, 0.7 = moins
   powerUpDuration: number;        // 1.0 = normal
+  collectibleMultiplier: number;  // 1.0 = normal, multiplier for collectibles
   
   // Visibilité & Perception
   obstacleVisibility: number;     // 1.0 = normal, 1.2 = plus visible
@@ -75,12 +79,14 @@ export interface GameplaySkin {
 const DEFAULT_MODIFIERS: SkinModifiers = {
   scoreMultiplier: 1.0,
   xylosEchoMultiplier: 1.0,
+  speedMultiplier: 1.0,
   shieldStrength: 1.0,
   damageMultiplier: 1.0,
   comboSpeedMultiplier: 1.0,
   comboDecayRate: 1.0,
   powerUpSpawnRate: 1.0,
   powerUpDuration: 1.0,
+  collectibleMultiplier: 1.0,
   obstacleVisibility: 1.0,
   feedbackIntensity: 1.0,
   chaosResistance: 0,

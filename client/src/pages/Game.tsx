@@ -11,7 +11,8 @@ import { AssetLoader, preloadAssets } from '@/game/AssetLoader';
 
 const BASE = import.meta.env.BASE_URL;
 const ASSETS = {
-  logo: `${BASE}logo-skull-glitch.png`,
+  logo: `${BASE}logo-skull-imposing.png`,
+  logoFull: `${BASE}logo-skull-glitch.png`,
 };
 
 const MODES: Array<{ mode: GameMode; displayName: string; desc: string; color: string; icon: string }> = [

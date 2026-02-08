@@ -1,8 +1,8 @@
 /**
- * FAIL FRENZY — DYNAMIC MESSAGE SYSTEM
+ * FAIL FRENZY — DYNAMIC MESSAGE SYSTEM v3.0 (Phase 3)
  * 
  * Messages courts, non bloquants, aléatoires
- * Contextes: frôlé, fail, skill, obstacles
+ * V3: Animations glitch, slide-in/out, scale, couleurs dynamiques
  */
 
 // ============================================================
@@ -10,23 +10,24 @@
 // ============================================================
 
 export type MessageContext = 
-  | 'near_miss'      // Quand frôlé
-  | 'fail'           // Quand collision/mort
-  | 'skill'          // Quand combo/performance
-  | 'obstacle_warn'  // Approche d'obstacle dangereux
-  | 'xylos'          // Messages Xylos
-  | 'general';       // Messages généraux
+  | 'near_miss' | 'fail' | 'skill' | 'obstacle_warn' | 'xylos' | 'general';
 
 export interface DynamicMessage {
   text: string;
   context: MessageContext;
-  duration: number;  // secondes
-  alpha: number;     // 0-1
+  duration: number;
+  maxDuration: number;
+  alpha: number;
   color: string;
+  // Animation state
+  slideOffset: number;   // horizontal slide (pixels)
+  scale: number;         // text scale
+  glitchPhase: number;   // glitch animation phase
+  yOffset: number;       // vertical position offset
 }
 
 // ============================================================
-// MESSAGE POOLS
+// MESSAGE POOLS (enriched)
 // ============================================================
 
 const MESSAGES: Record<MessageContext, string[]> = {
@@ -37,8 +38,11 @@ const MESSAGES: Record<MessageContext, string[]> = {
     'NOT BAD.',
     'CALCULATED?',
     'RISKY.',
+    'BOLD MOVE.',
+    'INCHES.',
+    'HAIR\'S BREADTH.',
+    'THREADING THE NEEDLE.',
   ],
-  
   fail: [
     'NOTED.',
     'EXPECTED.',
@@ -47,8 +51,12 @@ const MESSAGES: Record<MessageContext, string[]> = {
     'AGAIN?',
     'INTERESTING.',
     'DATA LOGGED.',
+    'OUCH.',
+    'THAT HAPPENED.',
+    'WELL THEN.',
+    'FASCINATING.',
+    'RECORDED.',
   ],
-  
   skill: [
     'OK, WE SEE YOU.',
     'THIS IS GETTING SERIOUS.',
@@ -57,8 +65,12 @@ const MESSAGES: Record<MessageContext, string[]> = {
     'KEEP GOING.',
     'NOW WE\'RE TALKING.',
     'SKILL DETECTED.',
+    'NICE.',
+    'CLEAN.',
+    'FLAWLESS.',
+    'RESPECT.',
+    'ELITE MOVES.',
   ],
-  
   obstacle_warn: [
     'BAD IDEA',
     'YOU LOOK LOST',
@@ -67,26 +79,30 @@ const MESSAGES: Record<MessageContext, string[]> = {
     'TURN BACK',
     'NOT RECOMMENDED',
     'RECONSIDER',
+    'ABORT',
+    'NOPE.',
+    'REALLY?',
   ],
-  
   xylos: [
     'XYLOS RESPONDS',
     'ECHO RECEIVED',
     'RESONANCE',
     'CONNECTION',
     'SYNCHRONIZED',
+    'THE CORE PULSES',
+    'SIGNAL STRONG',
   ],
-  
   general: [
     'FOCUS',
     'BREATHE',
     'SURVIVE',
     'ADAPT',
     'PERSIST',
+    'EVOLVE',
+    'ENDURE',
   ],
 };
 
-// Couleurs par contexte
 const MESSAGE_COLORS: Record<MessageContext, string> = {
   near_miss: '#ffdd00',
   fail: '#ff4444',
@@ -96,154 +112,185 @@ const MESSAGE_COLORS: Record<MessageContext, string> = {
   general: '#ffffff',
 };
 
+// Glitch colors for each context
+const GLITCH_COLORS: Record<MessageContext, [string, string]> = {
+  near_miss: ['#ff0066', '#00ffff'],
+  fail: ['#ff0000', '#0066ff'],
+  skill: ['#00ff00', '#ff00ff'],
+  obstacle_warn: ['#ff4400', '#ffff00'],
+  xylos: ['#ff00ff', '#00ff88'],
+  general: ['#ff0066', '#00ffff'],
+};
+
+// Font sizes per context
+const FONT_SIZES: Record<MessageContext, number> = {
+  near_miss: 22,
+  fail: 26,
+  skill: 24,
+  obstacle_warn: 20,
+  xylos: 18,
+  general: 16,
+};
+
 // ============================================================
-// DYNAMIC MESSAGE SYSTEM
+// DYNAMIC MESSAGE SYSTEM v3.0
 // ============================================================
 
 export class DynamicMessageSystem {
   private activeMessages: DynamicMessage[] = [];
   private maxMessages: number = 3;
-  private minInterval: number = 1.0; // secondes entre messages
+  private minInterval: number = 0.8;
   private lastMessageTime: number = 0;
 
   constructor() {}
 
-  /**
-   * Afficher un message
-   */
   show(context: MessageContext, customText?: string): void {
     const now = performance.now() / 1000;
-    
-    // Throttle messages
-    if (now - this.lastMessageTime < this.minInterval) {
-      return;
-    }
-
-    // Limite de messages actifs
-    if (this.activeMessages.length >= this.maxMessages) {
-      this.activeMessages.shift(); // Retirer le plus ancien
-    }
+    if (now - this.lastMessageTime < this.minInterval) return;
+    if (this.activeMessages.length >= this.maxMessages) this.activeMessages.shift();
 
     const text = customText || this.randomFrom(MESSAGES[context]);
+    const duration = this.getDuration(context);
+    
     const message: DynamicMessage = {
       text,
       context,
-      duration: this.getDuration(context),
+      duration,
+      maxDuration: duration,
       alpha: 1.0,
       color: MESSAGE_COLORS[context],
+      slideOffset: context === 'fail' ? -50 : (context === 'skill' ? 50 : 0),
+      scale: 0.3,
+      glitchPhase: 0,
+      yOffset: 0,
     };
 
     this.activeMessages.push(message);
     this.lastMessageTime = now;
   }
 
-  /**
-   * Update messages (fade out)
-   */
   update(dt: number): void {
     for (let i = this.activeMessages.length - 1; i >= 0; i--) {
       const msg = this.activeMessages[i];
       msg.duration -= dt;
       
-      // Fade out dans les dernières 0.5s
-      if (msg.duration < 0.5) {
-        msg.alpha = msg.duration / 0.5;
+      const elapsed = msg.maxDuration - msg.duration;
+      const progress = elapsed / msg.maxDuration;
+
+      // Entry animation (first 0.3s)
+      if (elapsed < 0.3) {
+        const t = elapsed / 0.3;
+        msg.scale = 0.3 + t * 0.7; // Scale up from 0.3 to 1.0
+        msg.slideOffset *= (1 - t);  // Slide to center
+        msg.glitchPhase = t < 0.15 ? 1 : 0; // Glitch on entry
+      } else {
+        msg.scale = 1.0;
+        msg.slideOffset = 0;
+        msg.glitchPhase = 0;
       }
-      
-      // Retirer si terminé
+
+      // Exit animation (last 0.5s)
+      if (msg.duration < 0.5) {
+        const t = msg.duration / 0.5;
+        msg.alpha = t;
+        msg.scale = 1.0 + (1 - t) * 0.2; // Slightly grow on exit
+        msg.yOffset = (1 - t) * -10; // Float up
+      }
+
+      // Random micro-glitch (rare)
+      if (Math.random() < 0.005) {
+        msg.glitchPhase = 1;
+        setTimeout(() => { msg.glitchPhase = 0; }, 50);
+      }
+
       if (msg.duration <= 0) {
         this.activeMessages.splice(i, 1);
       }
     }
   }
 
-  /**
-   * Render messages
-   */
   render(ctx: CanvasRenderingContext2D, width: number, height: number): void {
-    const startY = height * 0.25;
-    const spacing = 40;
+    const startY = height * 0.22;
+    const spacing = 45;
 
     ctx.save();
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.font = 'bold 18px "Courier New", monospace';
 
     this.activeMessages.forEach((msg, index) => {
-      const y = startY + index * spacing;
+      const y = startY + index * spacing + msg.yOffset;
+      const fontSize = FONT_SIZES[msg.context];
       
+      ctx.save();
+      ctx.translate(width / 2 + msg.slideOffset, y);
+      ctx.scale(msg.scale, msg.scale);
       ctx.globalAlpha = msg.alpha;
-      
-      // Ombre
-      ctx.shadowBlur = 10;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font = `bold ${fontSize}px "Courier New", monospace`;
+
+      // Background blur effect
+      const textWidth = ctx.measureText(msg.text).width;
+      ctx.fillStyle = 'rgba(0,0,0,0.4)';
+      const pad = 8;
+      ctx.fillRect(-textWidth / 2 - pad, -fontSize / 2 - pad / 2, textWidth + pad * 2, fontSize + pad);
+
+      // Glitch effect
+      if (msg.glitchPhase > 0) {
+        const [g1, g2] = GLITCH_COLORS[msg.context];
+        ctx.globalAlpha = msg.alpha * 0.4;
+        ctx.fillStyle = g1;
+        ctx.fillText(msg.text, (Math.random() - 0.5) * 4, (Math.random() - 0.5) * 2);
+        ctx.fillStyle = g2;
+        ctx.fillText(msg.text, (Math.random() - 0.5) * 4, (Math.random() - 0.5) * 2);
+        ctx.globalAlpha = msg.alpha;
+      }
+
+      // Main text with glow
+      ctx.shadowBlur = 15;
       ctx.shadowColor = msg.color;
-      
-      // Texte
       ctx.fillStyle = msg.color;
-      ctx.fillText(msg.text, width / 2, y);
+      ctx.fillText(msg.text, 0, 0);
+
+      // Bright core text (no shadow)
+      ctx.shadowBlur = 0;
+      ctx.globalAlpha = msg.alpha * 0.6;
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(msg.text, 0, 0);
+
+      ctx.restore();
     });
 
     ctx.restore();
   }
 
-  /**
-   * Obtenir la durée selon le contexte
-   */
   private getDuration(context: MessageContext): number {
     switch (context) {
-      case 'near_miss':
-        return 1.5;
-      case 'fail':
-        return 2.5;
-      case 'skill':
-        return 2.0;
-      case 'obstacle_warn':
-        return 1.0;
-      case 'xylos':
-        return 2.0;
-      case 'general':
-        return 1.5;
-      default:
-        return 2.0;
+      case 'near_miss': return 1.5;
+      case 'fail': return 2.5;
+      case 'skill': return 2.0;
+      case 'obstacle_warn': return 1.2;
+      case 'xylos': return 2.0;
+      case 'general': return 1.5;
+      default: return 2.0;
     }
   }
 
-  /**
-   * Clear all messages
-   */
   clear(): void {
     this.activeMessages = [];
   }
 
-  /**
-   * Helper: random from array
-   */
   private randomFrom<T>(arr: T[]): T {
     return arr[Math.floor(Math.random() * arr.length)];
   }
 
-  /**
-   * Obtenir le nombre de messages actifs
-   */
   getActiveCount(): number {
     return this.activeMessages.length;
   }
 }
 
-// ============================================================
-// HELPER FUNCTIONS
-// ============================================================
-
-/**
- * Déterminer si un message "near miss" doit être affiché
- */
 export function shouldShowNearMiss(distance: number, threshold: number): boolean {
-  return distance < threshold && Math.random() < 0.3; // 30% chance
+  return distance < threshold && Math.random() < 0.3;
 }
 
-/**
- * Déterminer si un message "skill" doit être affiché
- */
 export function shouldShowSkill(combo: number, threshold: number): boolean {
-  return combo >= threshold && combo % threshold === 0; // Tous les X combos
+  return combo >= threshold && combo % threshold === 0;
 }

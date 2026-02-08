@@ -150,6 +150,13 @@ export class NarrativeObstacleSystem {
     const warnings: Array<{ type: NarrativeObstacleType; message: string }> = [];
     const effects: Array<{ type: NarrativeObstacleType; force: { x: number; y: number } }> = [];
 
+    // Clean up off-screen obstacles
+    for (let i = this.obstacles.length - 1; i >= 0; i--) {
+      if (this.obstacles[i].x < -200 || this.obstacles[i].x > 1200) {
+        this.obstacles.splice(i, 1);
+      }
+    }
+
     for (const obs of this.obstacles) {
       // Update position
       obs.x += obs.vx * dt;

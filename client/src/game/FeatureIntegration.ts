@@ -133,28 +133,9 @@ export class IntegratedGameManager {
       this.messages.render(ctx, width, height);
     }
 
-    // Render Xylos indicator (optionnel, petit indicateur en haut)
+    // Render Xylos indicator (premium v3)
     if (this.flags.xylos) {
-      this.renderXylosIndicator(ctx, width, height);
-    }
-  }
-
-  /**
-   * Render indicateur Xylos (petit, non intrusif)
-   */
-  private renderXylosIndicator(ctx: CanvasRenderingContext2D, width: number, height: number): void {
-    const data = this.xylos.getData();
-    const msg = this.xylos.getCurrentMessage();
-
-    if (msg) {
-      ctx.save();
-      ctx.textAlign = 'center';
-      ctx.font = 'bold 14px monospace';
-      ctx.fillStyle = this.xylos.getStateColor();
-      ctx.shadowBlur = 10;
-      ctx.shadowColor = this.xylos.getStateColor();
-      ctx.fillText(msg, width / 2, 30);
-      ctx.restore();
+      this.xylos.renderIndicator(ctx, width, height);
     }
   }
 
