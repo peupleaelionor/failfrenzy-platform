@@ -10,7 +10,7 @@ function createAuthContext(userId: number = 1): TrpcContext {
     openId: `test-user-${userId}`,
     email: `user${userId}@test.com`,
     name: `Test User ${userId}`,
-    loginMethod: "manus",
+    loginMethod: "supabase",
     role: "user",
     isPremium: 0,
     premiumExpiresAt: null,
@@ -25,7 +25,7 @@ function createAuthContext(userId: number = 1): TrpcContext {
     user,
     req: {
       protocol: "https",
-      headers: { origin: "https://test.manus.space" },
+      headers: { origin: "https://failfrenzy.com" },
     } as TrpcContext["req"],
     res: {
       clearCookie: () => {},

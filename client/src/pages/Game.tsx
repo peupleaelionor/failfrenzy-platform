@@ -10,8 +10,9 @@ import { GameCanvas } from '@/game/GameComponents';
 import type { GameMode } from '@/game/FailFrenzyGame';
 import { AssetLoader, preloadAssets } from '@/game/AssetLoader';
 
+const BASE = import.meta.env.BASE_URL;
 const ASSETS = {
-  logo: "https://files.manuscdn.com/user_upload_by_module/session_file/310519663278017338/OzPqrjVSMXFHuMQc.png",
+  logo: `${BASE}01_BRANDING/Logo_Principal_Skull_Glitch.png`,
 };
 
 export default function Game() {
