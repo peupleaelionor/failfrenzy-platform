@@ -1,18 +1,15 @@
 /**
- * FAIL FRENZY PREMIUM - Asset Loader
- * Précharge toutes les images du jeu pour un rendu fluide
- * Supporte le déploiement sur GitHub Pages avec base path dynamique
+ * FAIL FRENZY: ECHOES OF THE VOID - Asset Loader
+ * Précharge toutes les images du jeu pour un rendu fluide.
  */
 
 export interface AssetManifest {
   [key: string]: string;
 }
 
-// Resolve base path for GitHub Pages compatibility
 const BASE = import.meta.env.BASE_URL || '/';
 
 function assetPath(path: string): string {
-  // path starts with / — make it relative to BASE
   return `${BASE}${path.startsWith('/') ? path.slice(1) : path}`;
 }
 
@@ -22,34 +19,47 @@ export class AssetLoader {
   private total: number = 0;
   private onProgress?: (loaded: number, total: number) => void;
 
-  // Asset manifest - toutes les images du jeu (chemins relatifs)
   public static readonly MANIFEST: AssetManifest = {
-    // Player
-    player: assetPath('/images/assets/pulse_clicker_logo_512.png'),
+    // Branding
+    logo: assetPath('/assets/01_BRANDING/Logo_Principal_Skull_Glitch.png'),
+    favicon: assetPath('/assets/01_BRANDING/Favicon_Simplifie.png'),
     
-    // Obstacles
-    obstacle_fire: assetPath('/images/assets/target_fire_glow.png'),
-    obstacle_classic: assetPath('/images/assets/target_classic_glow.png'),
+    // Vaisseaux (Skins)
+    vaisseau_cyan: assetPath('/assets/02_SKINS_VAISSEAUX/COMMUN_Vaisseau_Cyan.png'),
+    vaisseau_magenta: assetPath('/assets/02_SKINS_VAISSEAUX/COMMUN_Vaisseau_Magenta.png'),
+    vaisseau_cyberpunk: assetPath('/assets/02_SKINS_VAISSEAUX/RARE_Vaisseau_Cyberpunk.png'),
+    vaisseau_steampunk: assetPath('/assets/02_SKINS_VAISSEAUX/RARE_Vaisseau_Steampunk.png'),
+    vaisseau_vaporwave: assetPath('/assets/02_SKINS_VAISSEAUX/RARE_Vaisseau_Vaporwave.png'),
+    vaisseau_cyber_ninja: assetPath('/assets/02_SKINS_VAISSEAUX/EPIQUE_Vaisseau_Cyber_Ninja.png'),
+    vaisseau_fantome: assetPath('/assets/02_SKINS_VAISSEAUX/EPIQUE_Vaisseau_Fantome.png'),
+    vaisseau_pirate: assetPath('/assets/02_SKINS_VAISSEAUX/EPIQUE_Vaisseau_Pirate_Spatial.png'),
+    vaisseau_ange: assetPath('/assets/02_SKINS_VAISSEAUX/LEGENDAIRE_Ange_Dechu.png'),
+    vaisseau_cosmique: assetPath('/assets/02_SKINS_VAISSEAUX/LEGENDAIRE_Entite_Cosmique.png'),
+    vaisseau_golem: assetPath('/assets/02_SKINS_VAISSEAUX/LEGENDAIRE_Golem_Lave.png'),
     
-    // Power-ups & Collectibles
-    powerup_neon: assetPath('/images/assets/target_neon_glow.png'),
+    // Environnements
+    bg_nebuleuse: assetPath('/assets/03_ENVIRONNEMENTS/BG_Nebuleuse_Spatiale.png'),
+    bg_tunnel: assetPath('/assets/03_ENVIRONNEMENTS/BG_Tunnel_Donnees.png'),
+    bg_ville: assetPath('/assets/03_ENVIRONNEMENTS/BG_Ville_Cyberpunk.png'),
+    planete_x: assetPath('/assets/03_ENVIRONNEMENTS/Planete_X_Destination.png'),
     
-    // Effects
-    hit_spark: assetPath('/images/assets/hit_fx_spark.png'),
+    // UI Elements
+    ui_buttons: assetPath('/assets/04_UI_UX/Boutons_UI_Kit.png'),
+    ui_hud: assetPath('/assets/04_UI_UX/HUD_Interface_Jeu.png'),
+    ui_gameover: assetPath('/assets/04_UI_UX/GameOver_Screen.png'),
+    ui_loading: assetPath('/assets/04_UI_UX/Loading_Screen.png'),
+    ui_shop: assetPath('/assets/04_UI_UX/Shop_Interface_Boutique.png'),
+    ui_leaderboard: assetPath('/assets/04_UI_UX/Leaderboard_Classement.png'),
     
-    // UI
-    logo: assetPath('/images/assets/pulse_clicker_logo_512.png'),
-    button_play: assetPath('/images/assets/button_jouer_pulse_2.png'),
-    logo_skull: assetPath('/images/assets/logo-skull.jpeg'),
-    skull_icon: assetPath('/images/assets/logo-skull-256.png'),
-    skull_logo: assetPath('/images/assets/logo-skull-512.png'),
-    skull_cropped: assetPath('/images/assets/logo-skull-cropped.png'),
+    // Game Elements
+    item_etoile: assetPath('/assets/06_GAME_ELEMENTS/Etoile_Energie_Collectable.png'),
+    item_obstacle: assetPath('/assets/06_GAME_ELEMENTS/Obstacle_Glitch_Neon.png'),
+    item_trou_noir: assetPath('/assets/06_GAME_ELEMENTS/Trou_Noir_Obstacle.png'),
+    item_badges: assetPath('/assets/06_GAME_ELEMENTS/Badges_Succes.png'),
+    item_powerups: assetPath('/assets/06_GAME_ELEMENTS/PowerUps_Icon_Set.png'),
     
-    // Backgrounds
-    bg_arcade: assetPath('/images/assets/hero-arcade-room.jpeg'),
-    banner_gameover: assetPath('/images/assets/banner-game-over.jpeg'),
-    promo_banner: assetPath('/images/assets/promo-banner.jpeg'),
-    ui_pattern: assetPath('/images/assets/ui-pattern-arcade.jpeg'),
+    // VFX
+    vfx_explosion: assetPath('/assets/07_VFX_EFFECTS/Explosion_Echec_VFX.png'),
   };
 
   constructor(onProgress?: (loaded: number, total: number) => void) {
@@ -79,7 +89,6 @@ export class AssetLoader {
       
       img.onerror = () => {
         console.warn(`Failed to load asset: ${key} (${src})`);
-        // Create a fallback colored canvas
         const canvas = document.createElement('canvas');
         canvas.width = 64;
         canvas.height = 64;
@@ -118,7 +127,6 @@ export class AssetLoader {
   }
 }
 
-// Singleton instance
 let globalAssets: AssetLoader | null = null;
 
 export function getAssetLoader(): AssetLoader {

@@ -1,47 +1,47 @@
 /**
  * Stripe Products Configuration
- * Centralized product and price definitions
+ * Centralized product and price definitions for Fail Frenzy: Echoes of the Void
  */
 
 export const STRIPE_PRODUCTS = {
-  // Premium Subscriptions
+  // Premium Subscriptions - "Commandeur de Xylos"
   PREMIUM_MONTHLY: {
-    name: "Fail Frenzy Premium - Monthly",
-    description: "Unlimited games, no ads, all skins, global leaderboards",
+    name: "Engagement Tactique (Mensuel)",
+    description: "Statut de Commandeur : Vols illimités, Espace de vol dégagé (pas de pubs), Accès à toutes les galaxies, Prototypes classifiés déverrouillés.",
     price: 4.99,
     currency: "EUR",
     interval: "month" as const,
     priceId: process.env.STRIPE_PRICE_PREMIUM_MONTHLY || "",
   },
   PREMIUM_YEARLY: {
-    name: "Fail Frenzy Premium - Yearly",
-    description: "Unlimited games, no ads, all skins, global leaderboards (Save 33%)",
+    name: "Engagement Stratégique (Annuel)",
+    description: "Statut de Commandeur Suprême : Tous les avantages tactiques avec un engagement à long terme pour la survie de Xylos. (Économisez 33%)",
     price: 39.99,
     currency: "EUR",
     interval: "year" as const,
     priceId: process.env.STRIPE_PRICE_PREMIUM_YEARLY || "",
   },
 
-  // Token Packs
+  // Token Packs - "Énergie de Xylos"
   TOKENS_100: {
-    name: "100 Tokens",
-    description: "Small token pack",
+    name: "Pack Énergie : 100 Tokens",
+    description: "Petite recharge d'énergie pour acquérir de nouveaux prototypes de vaisseaux.",
     price: 0.99,
     currency: "EUR",
     tokens: 100,
     priceId: process.env.STRIPE_PRICE_TOKENS_100 || "",
   },
   TOKENS_500: {
-    name: "500 Tokens",
-    description: "Medium token pack (Best Value)",
+    name: "Pack Énergie : 500 Tokens",
+    description: "Recharge d'énergie moyenne. Recommandé par le Haut Commandement pour les pilotes actifs.",
     price: 3.99,
     currency: "EUR",
     tokens: 500,
     priceId: process.env.STRIPE_PRICE_TOKENS_500 || "",
   },
   TOKENS_1000: {
-    name: "1000 Tokens",
-    description: "Large token pack",
+    name: "Pack Énergie : 1000 Tokens",
+    description: "Grande réserve d'énergie. Pour les Écho-Pilotes d'élite souhaitant collectionner tous les vaisseaux.",
     price: 6.99,
     currency: "EUR",
     tokens: 1000,
