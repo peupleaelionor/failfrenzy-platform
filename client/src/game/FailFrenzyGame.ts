@@ -637,7 +637,7 @@ export class FailFrenzyGame {
     // Update black holes
     this.updateBlackHoles(dt);
 
-    // Update background stars
+    // Update background stars with parallax layers
     this.updateBackgroundStars(dt);
 
     // Shield regen (1 HP every 30s if below max)
@@ -701,6 +701,22 @@ export class FailFrenzyGame {
       const mid = (breathMin + breathMax) / 2;
       const amp = (breathMax - breathMin) / 2 + comboBoost;
       this.player.scale = mid + Math.sin(t) * amp;
+    }
+
+    // Phase Expert: Dynamic Aura around player
+    if (this.player && this.player.alive) {
+      const speed = Math.sqrt(this.player.velocity.x**2 + this.player.velocity.y**2);
+      const auraIntensity = Math.min(1, speed / 10);
+      this.particles.emit(
+        this.player.x, 
+        this.player.y, 
+        1, 
+        this.player.color, 
+        0, 20, 
+        1, 3, 
+        0.2, 0.5, 
+        0
+      );
     }
 
     // Player trail
@@ -905,18 +921,19 @@ export class FailFrenzyGame {
   }
 
   // ==================== BACKGROUND STARS ====================
-
   private updateBackgroundStars(dt: number): void {
+    // Phase Expert: Parallax layers for depth
     for (const star of this.backgroundStars) {
-      star.x -= star.speed * dt;
-      if (star.x < -5) {
+      // Stars move at different speeds based on their size (simulating depth)
+      const parallaxFactor = star.size * 0.5;
+      star.x -= star.speed * dt * parallaxFactor;
+      
+      if (star.x < -10) {
         star.x = 810;
         star.y = Math.random() * 600;
-        star.alpha = 0.3 + Math.random() * 0.7;
       }
     }
   }
-
   // ==================== XYLOS ENERGY ====================
 
   private addXylosEnergy(amount: number): void {

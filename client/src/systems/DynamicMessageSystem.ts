@@ -244,15 +244,16 @@ export class DynamicMessageSystem {
         ctx.globalAlpha = msg.alpha;
       }
 
-      // Main text with glow
-      ctx.shadowBlur = 15;
+      // Phase Expert: More ethereal and less blocking messages
+      ctx.shadowBlur = 20;
       ctx.shadowColor = msg.color;
       ctx.fillStyle = msg.color;
+      ctx.globalAlpha = msg.alpha * 0.3; // More transparent glow
       ctx.fillText(msg.text, 0, 0);
 
       // Bright core text (no shadow)
-      ctx.shadowBlur = 0;
-      ctx.globalAlpha = msg.alpha * 0.6;
+      ctx.shadowBlur = 5;
+      ctx.globalAlpha = msg.alpha * 0.8;
       ctx.fillStyle = '#ffffff';
       ctx.fillText(msg.text, 0, 0);
 
