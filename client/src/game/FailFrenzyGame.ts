@@ -189,19 +189,21 @@ class ParticlePool {
   }
 
   render(ctx: CanvasRenderingContext2D): void {
+    // Phase 3.2: Batch rendering for performance
+    ctx.save();
     for (let i = 0; i < this.capacity; i++) {
       const p = this.pool[i];
       if (!p.active) continue;
-      ctx.save();
       ctx.globalAlpha = p.alpha;
       ctx.fillStyle = p.color;
-      ctx.shadowBlur = 8;
+      // Reduced shadow for better mobile performance
+      ctx.shadowBlur = 4;
       ctx.shadowColor = p.color;
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
       ctx.fill();
-      ctx.restore();
     }
+    ctx.restore();
   }
 
   getActiveCount(): number {
@@ -481,8 +483,11 @@ export class FailFrenzyGame {
       }
 
       if (isPressed && this.player) {
-        this.player.y += (targetY - this.player.y) * 0.15;
-        this.player.x += (targetX - this.player.x) * 0.08;
+        // Phase 3.1: Smoother interpolation with delta time awareness
+        const lerpY = 1 - Math.pow(0.001, 1/60); // Approx 0.15 at 60fps but stable
+        const lerpX = 1 - Math.pow(0.01, 1/60);  // Approx 0.08 at 60fps but stable
+        this.player.y += (targetY - this.player.y) * lerpY;
+        this.player.x += (targetX - this.player.x) * lerpX;
       }
     });
 
@@ -681,7 +686,8 @@ export class FailFrenzyGame {
 
     // Apply skin modifiers (Phase 2: Gameplay skins)
     const modifiers = this.featureManager.getSkinModifiers();
-    const friction = 0.88 * modifiers.speedMultiplier;
+    // Phase 3.1: Improved friction calculation for snappier feel
+    const friction = Math.pow(0.88 * modifiers.speedMultiplier, dt * 60);
     this.player.velocity.x *= friction;
     this.player.velocity.y *= friction;
 
