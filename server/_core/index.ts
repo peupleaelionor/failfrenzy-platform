@@ -7,6 +7,7 @@ import { registerOAuthRoutes } from "./oauth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
+import { validateEnvironment } from "./env";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -28,6 +29,22 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 }
 
 async function startServer() {
+  // Validate environment variables
+  const validation = validateEnvironment();
+  
+  if (!validation.isValid) {
+    console.error("\n❌ CRITICAL: Required environment variables are missing:");
+    validation.errors.forEach(error => console.error(`  - ${error}`));
+    console.error("\nPlease set the required environment variables and restart the server.\n");
+    process.exit(1);
+  }
+  
+  if (validation.warnings.length > 0) {
+    console.warn("\n⚠️  WARNING: Some environment variables are not configured:");
+    validation.warnings.forEach(warning => console.warn(`  - ${warning}`));
+    console.warn("\nThe server will start, but some features may not work properly.\n");
+  }
+
   const app = express();
   const server = createServer(app);
 
