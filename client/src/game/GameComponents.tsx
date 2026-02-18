@@ -6,7 +6,7 @@
 
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { FailFrenzyGame, GameMode } from './FailFrenzyGame';
-import { GameState } from '../engine/GameEngine';
+import { GameState, GameEngine } from '../engine/GameEngine';
 import { AssetLoader, preloadAssets } from './AssetLoader';
 import { Link } from 'wouter';
 import {
@@ -415,7 +415,8 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ mode, assets, onScoreUpd
 
   useEffect(() => {
     if (!canvasRef.current) return;
-    const game = new FailFrenzyGame('game-canvas', mode, assets);
+    const engine = new GameEngine('game-canvas', { width: 800, height: 500 });
+    const game = new FailFrenzyGame(engine, mode, assets);
     gameRef.current = game;
     game.start();
 
