@@ -336,6 +336,10 @@ export async function purchaseSkin(userId: number, skinId: string) {
 
   const price = skin[0]!.priceTokens;
 
+  if (price < 0) {
+    throw new Error("Invalid skin price");
+  }
+
   await db.transaction(async (tx) => {
     // Check balance inside the transaction to avoid race conditions
     const user = await tx.select({ tokens: users.tokens }).from(users).where(eq(users.id, userId)).limit(1);
