@@ -66,7 +66,7 @@ export class FailFrenzyGame {
     applyDeviceOptimizedConfig();
     
     this.engine = new GameEngine(canvasId, { width: 800, height: 600 });
-    this.renderer = new NeonRenderer(this.engine['ctx'], 800, 600);
+    this.renderer = new NeonRenderer(this.engine.getContext(), 800, 600);
     this.physics = new PhysicsSystem();
     this.audio = new AudioSystem();
     this.combo = new ComboSystem();
@@ -215,7 +215,7 @@ export class FailFrenzyGame {
   }
 
   private render() {
-    const ctx = this.engine['ctx'];
+    const ctx = this.engine.getContext();
     if (!ctx) return;
 
     // Background

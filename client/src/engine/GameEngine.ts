@@ -47,6 +47,7 @@ export class GameEngine {
   setState(newState: Partial<GameState>) {
     this.state = { ...this.state, ...newState };
   }
+  getContext() { return this.ctx; }
 
   private loop(now: number) {
     if (!this.running) return;
