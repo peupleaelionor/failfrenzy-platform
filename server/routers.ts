@@ -1,9 +1,8 @@
 import { COOKIE_NAME } from "@shared/const";
-import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
+import { adminProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import * as db from "./db";
 import { stripeRouter } from "./stripe/router";
 
@@ -19,6 +18,15 @@ export const appRouter = router({
         success: true,
       } as const;
     }),
+    verifyAdmin: publicProcedure
+      .input(z.object({ password: z.string() }))
+      .mutation(({ input }) => {
+        const adminPassword = process.env.ADMIN_PASSWORD;
+        if (!adminPassword) {
+          return { success: false } as const;
+        }
+        return { success: input.password === adminPassword } as const;
+      }),
   }),
 
   // ============ GAME ============
@@ -123,7 +131,7 @@ export const appRouter = router({
       }),
 
     // Admin only: add tokens manually
-    addTokens: protectedProcedure
+    addTokens: adminProcedure
       .input(
         z.object({
           userId: z.number().int(),
@@ -131,11 +139,7 @@ export const appRouter = router({
           description: z.string().optional(),
         })
       )
-      .mutation(async ({ ctx, input }) => {
-        if (ctx.user.role !== "admin") {
-          throw new TRPCError({ code: "FORBIDDEN" });
-        }
-
+      .mutation(async ({ input }) => {
         await db.addTokens(input.userId, input.amount, "reward", input.description);
         return { success: true };
       }),

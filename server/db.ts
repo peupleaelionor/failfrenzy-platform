@@ -190,13 +190,13 @@ export async function spendTokens(userId: number, amount: number, description?: 
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  const user = await db.select({ tokens: users.tokens }).from(users).where(eq(users.id, userId)).limit(1);
-
-  if (!user.length || user[0]!.tokens < amount) {
-    throw new Error("Insufficient tokens");
-  }
-
   await db.transaction(async (tx) => {
+    const user = await tx.select({ tokens: users.tokens }).from(users).where(eq(users.id, userId)).limit(1);
+
+    if (!user.length || user[0]!.tokens < amount) {
+      throw new Error("Insufficient tokens");
+    }
+
     await tx.insert(tokenTransactions).values({
       userId,
       amount: -amount,
@@ -337,8 +337,26 @@ export async function purchaseSkin(userId: number, skinId: string) {
   const price = skin[0]!.priceTokens;
 
   await db.transaction(async (tx) => {
-    // Spend tokens
-    await spendTokens(userId, price, `Purchased skin: ${skin[0]!.name}`, undefined);
+    // Check balance inside the transaction to avoid race conditions
+    const user = await tx.select({ tokens: users.tokens }).from(users).where(eq(users.id, userId)).limit(1);
+
+    if (!user.length || user[0]!.tokens < price) {
+      throw new Error("Insufficient tokens");
+    }
+
+    // Record token transaction
+    await tx.insert(tokenTransactions).values({
+      userId,
+      amount: -price,
+      type: "spend",
+      description: `Purchased skin: ${skin[0]!.name}`,
+    });
+
+    // Deduct tokens
+    await tx
+      .update(users)
+      .set({ tokens: sql`${users.tokens} - ${price}` })
+      .where(eq(users.id, userId));
 
     // Unlock skin
     await tx.insert(userSkins).values({
