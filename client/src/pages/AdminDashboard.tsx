@@ -69,7 +69,7 @@ const AdminLogin: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
           <input type="password" value={password} onChange={e => setPassword(e.target.value)}
             placeholder="Mot de passe admin"
             className="w-full px-4 py-3 rounded-xl text-sm font-mono text-white placeholder-gray-600 mb-4 outline-none transition-all focus:ring-2"
-            style={{ background: 'rgba(255,255,255,0.05)', border: error ? '1px solid #ff4444' : '1px solid rgba(0,240,255,0.15)', focusRingColor: '#00f0ff' }} />
+            style={{ background: 'rgba(255,255,255,0.05)', border: error ? '1px solid #ff4444' : '1px solid rgba(0,240,255,0.15)' }} />
           <button type="submit"
             className="w-full py-3 rounded-xl font-bold text-sm transition-all hover:scale-105"
             style={{ background: 'linear-gradient(135deg, #00f0ff, #ff00ff)', color: '#000' }}>
