@@ -418,6 +418,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ mode, assets, onScoreUpd
     const engine = new GameEngine('game-canvas');
     const game = new FailFrenzyGame(engine, mode, assets);
     gameRef.current = game;
+    game.start();
 
     const iv = setInterval(() => {
       const st = game.getState();

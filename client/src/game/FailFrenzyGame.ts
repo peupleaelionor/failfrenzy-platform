@@ -358,10 +358,9 @@ export class FailFrenzyGame {
     this.initBackgroundStars();
     this.setupControls();
 
-    // Start engine loop — register update and render as systems
+    // Register update and render callbacks
     this.engine.addSystem((dt: number) => this.updateGameLogic(dt));
     this.engine.addSystem((_dt: number) => this.renderGame());
-    this.engine.start();
   }
 
   private initBackgroundStars(): void {
