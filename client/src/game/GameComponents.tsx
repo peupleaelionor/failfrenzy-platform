@@ -463,6 +463,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ mode, assets, onScoreUpd
 
   const handleRestart = useCallback(() => {
     if (!gameRef.current) return;
+    gameOverHandled.current = false;
     gameRef.current.restartGame();
     setIsPaused(false);
     setShowGameOver(false);
