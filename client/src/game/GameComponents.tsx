@@ -408,6 +408,7 @@ interface GameCanvasProps {
 export const GameCanvas: React.FC<GameCanvasProps> = ({ mode, assets, onScoreUpdate, onGameOver }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameRef = useRef<FailFrenzyGame | null>(null);
+  const gameOverHandled = useRef(false);
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [isPaused, setIsPaused] = useState(false);
   const [showGameOver, setShowGameOver] = useState(false);
@@ -415,25 +416,39 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ mode, assets, onScoreUpd
 
   useEffect(() => {
     if (!canvasRef.current) return;
-    const engine = new GameEngine('game-canvas');
-    const game = new FailFrenzyGame(engine, mode, assets);
-    gameRef.current = game;
-    game.start();
+    gameOverHandled.current = false;
+
+    let engine: GameEngine;
+    let game: FailFrenzyGame;
+    try {
+      engine = new GameEngine('game-canvas');
+      game = new FailFrenzyGame(engine, mode, assets);
+      gameRef.current = game;
+      game.start();
+    } catch (err) {
+      console.error('[FailFrenzy] Failed to initialize game:', err);
+      return;
+    }
 
     const iv = setInterval(() => {
-      const st = game.getState();
-      setGameState(st);
-      if (onScoreUpdate) onScoreUpdate(st.score);
-      if (st.isGameOver && !showGameOver) {
-        setShowGameOver(true);
-        setFinalStats({ score: st.score, fails: st.fails, time: st.time });
-        if (onGameOver) onGameOver(st.score, st.fails, st.time);
-        try {
-          const key = 'failfrenzy_highscores';
-          const ex = JSON.parse(localStorage.getItem(key) || '{}');
-          const mn = mode.name || 'classic';
-          if (!ex[mn] || st.score > ex[mn]) { ex[mn] = st.score; localStorage.setItem(key, JSON.stringify(ex)); }
-        } catch {}
+      try {
+        const st = game.getState();
+        setGameState(st);
+        if (onScoreUpdate) onScoreUpdate(st.score);
+        if (st.isGameOver && !gameOverHandled.current) {
+          gameOverHandled.current = true;
+          setShowGameOver(true);
+          setFinalStats({ score: st.score, fails: st.fails, time: st.time });
+          if (onGameOver) onGameOver(st.score, st.fails, st.time);
+          try {
+            const key = 'failfrenzy_highscores';
+            const ex = JSON.parse(localStorage.getItem(key) || '{}');
+            const mn = mode.name || 'classic';
+            if (!ex[mn] || st.score > ex[mn]) { ex[mn] = st.score; localStorage.setItem(key, JSON.stringify(ex)); }
+          } catch {}
+        }
+      } catch (err) {
+        console.error('[FailFrenzy] Game loop error:', err);
       }
     }, 100);
 

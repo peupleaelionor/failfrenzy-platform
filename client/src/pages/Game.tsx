@@ -88,15 +88,26 @@ export default function Game() {
   // Si le jeu est démarré, afficher le composant de jeu
   if (gameStarted && selectedMode && assets && !isLoading) {
     return (
-      <div className="min-h-screen bg-[#050818]">
+      <div className="min-h-screen bg-[#050818] flex flex-col items-center justify-center pt-4 pb-4">
         <GameCanvas
           mode={selectedMode}
           assets={assets}
           onGameOver={(score) => {
             console.log('Game Over! Score:', score);
-            handleBackToModes();
           }}
         />
+        <button
+          onClick={handleBackToModes}
+          className="mt-4 px-8 py-3 rounded-xl font-bold text-sm tracking-wider transition-all hover:scale-105 active:scale-95"
+          style={{
+            background: 'rgba(255,255,255,0.1)',
+            border: '2px solid rgba(0,240,255,0.4)',
+            color: '#00f0ff',
+            boxShadow: '0 0 20px rgba(0,240,255,0.15)',
+          }}
+        >
+          ← BACK TO MODES
+        </button>
       </div>
     );
   }

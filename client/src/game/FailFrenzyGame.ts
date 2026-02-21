@@ -527,6 +527,8 @@ export class FailFrenzyGame {
         this.engine.removeEntity(obs.id);
         this.obstacles.splice(i, 1);
         this.orbiterAnchors.delete(obs.id);
+        // Score points for dodging this obstacle
+        this.combo.addScore('dodge', obs.x, obs.y);
       }
     }
   }
@@ -567,12 +569,14 @@ export class FailFrenzyGame {
   private onFail(): void {
     this.shieldHP--;
     this.shake(300);
+    this.combo.breakCombo();
+    this.engine.setState({ fails: this.engine.getState().fails + 1 });
     if (this.shieldHP <= 0) this.gameOver(false);
     else this.screenFlash = { color: '#ff0000', alpha: 0.5 };
   }
 
   private gameOver(win: boolean): void {
-    this.engine.setState({ isGameOver: true });
+    this.engine.setState({ isGameOver: true, score: this.combo.getScore() });
     this.featureManager.onGameOver(this.combo.getScore());
   }
 
