@@ -2,12 +2,16 @@ import { Request, Response } from "express";
 import Stripe from "stripe";
 import * as db from "../db";
 import { getProductByPriceId, isPremiumProduct, isTokenProduct, STRIPE_PRODUCTS } from "./products";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
-  apiVersion: "2026-01-28.clover",
-});
+import { getStripe } from "./config";
 
 export async function handleStripeWebhook(req: Request, res: Response) {
+  const stripe = getStripe();
+  
+  if (!stripe) {
+    console.error("[Stripe Webhook] Stripe is not configured");
+    return res.status(503).send("Stripe is not configured");
+  }
+
   const sig = req.headers["stripe-signature"];
 
   if (!sig) {
@@ -37,19 +41,19 @@ export async function handleStripeWebhook(req: Request, res: Response) {
   try {
     switch (event.type) {
       case "checkout.session.completed":
-        await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session);
+        await handleCheckoutCompleted(stripe, event.data.object as Stripe.Checkout.Session);
         break;
 
       case "invoice.paid":
-        await handleInvoicePaid(event.data.object as Stripe.Invoice);
+        await handleInvoicePaid(stripe, event.data.object as Stripe.Invoice);
         break;
 
       case "customer.subscription.updated":
-        await handleSubscriptionUpdated(event.data.object as Stripe.Subscription);
+        await handleSubscriptionUpdated(stripe, event.data.object as Stripe.Subscription);
         break;
 
       case "customer.subscription.deleted":
-        await handleSubscriptionDeleted(event.data.object as Stripe.Subscription);
+        await handleSubscriptionDeleted(stripe, event.data.object as Stripe.Subscription);
         break;
 
       case "payment_intent.succeeded":
@@ -67,7 +71,7 @@ export async function handleStripeWebhook(req: Request, res: Response) {
   }
 }
 
-async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
+async function handleCheckoutCompleted(stripe: Stripe, session: Stripe.Checkout.Session) {
   console.log("[Stripe] Checkout completed:", session.id);
 
   const userId = parseInt(session.metadata?.user_id || "0");
@@ -156,7 +160,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   }
 }
 
-async function handleInvoicePaid(invoice: Stripe.Invoice) {
+async function handleInvoicePaid(stripe: Stripe, invoice: Stripe.Invoice) {
   console.log("[Stripe] Invoice paid:", invoice.id);
 
   const customerId = invoice.customer as string;
@@ -189,7 +193,7 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
   console.log(`[Stripe] Premium renewed for user ${userId} until ${expiresAt}`);
 }
 
-async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
+async function handleSubscriptionUpdated(stripe: Stripe, subscription: Stripe.Subscription) {
   console.log("[Stripe] Subscription updated:", subscription.id);
 
   const customerId = subscription.customer as string;
@@ -215,7 +219,7 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
   }
 }
 
-async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
+async function handleSubscriptionDeleted(stripe: Stripe, subscription: Stripe.Subscription) {
   console.log("[Stripe] Subscription deleted:", subscription.id);
 
   const customerId = subscription.customer as string;

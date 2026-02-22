@@ -1,12 +1,8 @@
 import { TRPCError } from "@trpc/server";
-import Stripe from "stripe";
 import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
 import { STRIPE_PRODUCTS } from "./products";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
-  apiVersion: "2026-01-28.clover",
-});
+import { getStripe } from "./config";
 
 export const stripeRouter = router({
   createCheckout: protectedProcedure
@@ -22,6 +18,15 @@ export const stripeRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      const stripe = getStripe();
+      
+      if (!stripe) {
+        throw new TRPCError({
+          code: "SERVICE_UNAVAILABLE",
+          message: "Stripe is not configured. Please contact support.",
+        });
+      }
+
       const product = STRIPE_PRODUCTS[input.productKey];
       const user = ctx.user;
       const origin = ctx.req.headers.origin || "http://localhost:3000";
@@ -65,6 +70,15 @@ export const stripeRouter = router({
     }),
 
   getCustomerPortalUrl: protectedProcedure.mutation(async ({ ctx }) => {
+    const stripe = getStripe();
+    
+    if (!stripe) {
+      throw new TRPCError({
+        code: "SERVICE_UNAVAILABLE",
+        message: "Stripe is not configured. Please contact support.",
+      });
+    }
+
     const user = ctx.user;
     const origin = ctx.req.headers.origin || "http://localhost:3000";
 
