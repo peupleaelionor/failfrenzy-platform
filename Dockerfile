@@ -16,8 +16,10 @@ RUN pnpm install --frozen-lockfile --prod=false
 # Copy source code
 COPY . .
 
-# Build backend
-RUN pnpm run build:backend
+ENV NODE_ENV=production
+
+# Build frontend and backend
+RUN pnpm run build
 
 # Expose port
 EXPOSE 3000

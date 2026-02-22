@@ -71,6 +71,14 @@ async function startServer() {
     serveStatic(app);
   }
 
+  // Global error handler — prevents unhandled errors from crashing the server
+  app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    console.error("[Server] Unhandled error:", err);
+    if (!res.headersSent) {
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   const preferredPort = parseInt(process.env.PORT || "3000");
   const port = await findAvailablePort(preferredPort);
 
@@ -81,6 +89,20 @@ async function startServer() {
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
   });
+
+  // Graceful shutdown
+  const shutdown = () => {
+    console.log("[Server] Shutting down gracefully...");
+    server.close(() => {
+      console.log("[Server] Closed.");
+      process.exit(0);
+    });
+    // Force exit after 10s if connections aren't closing
+    setTimeout(() => process.exit(1), 10_000);
+  };
+
+  process.on("SIGTERM", shutdown);
+  process.on("SIGINT", shutdown);
 }
 
 startServer().catch(console.error);

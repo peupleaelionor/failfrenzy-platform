@@ -1,12 +1,8 @@
 import { TRPCError } from "@trpc/server";
-import Stripe from "stripe";
 import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
+import { getStripeClient } from "./client";
 import { STRIPE_PRODUCTS } from "./products";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
-  apiVersion: "2026-01-28.clover",
-});
 
 export const stripeRouter = router({
   createCheckout: protectedProcedure
@@ -22,11 +18,11 @@ export const stripeRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      const stripe = getStripeClient();
       const product = STRIPE_PRODUCTS[input.productKey];
       const user = ctx.user;
       const origin = ctx.req.headers.origin || "http://localhost:3000";
 
-      // Determine mode
       const mode = input.productKey.startsWith("PREMIUM") ? "subscription" : "payment";
 
       try {
@@ -55,16 +51,17 @@ export const stripeRouter = router({
           url: session.url,
           sessionId: session.id,
         };
-      } catch (error: any) {
+      } catch (error) {
         console.error("[Stripe] Error creating checkout session:", error);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: error.message || "Failed to create checkout session",
+          message: error instanceof Error ? error.message : "Failed to create checkout session",
         });
       }
     }),
 
   getCustomerPortalUrl: protectedProcedure.mutation(async ({ ctx }) => {
+    const stripe = getStripeClient();
     const user = ctx.user;
     const origin = ctx.req.headers.origin || "http://localhost:3000";
 
@@ -84,11 +81,11 @@ export const stripeRouter = router({
       return {
         url: session.url,
       };
-    } catch (error: any) {
+    } catch (error) {
       console.error("[Stripe] Error creating portal session:", error);
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
-        message: error.message || "Failed to create portal session",
+        message: error instanceof Error ? error.message : "Failed to create portal session",
       });
     }
   }),

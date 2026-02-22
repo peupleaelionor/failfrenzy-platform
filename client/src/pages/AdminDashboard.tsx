@@ -4,8 +4,9 @@
  * Affiche les KPIs clés, les métriques de croissance et l'état du projet.
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'wouter';
+import { trpc } from '../lib/trpc';
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -36,22 +37,32 @@ interface RevenueData {
 
 // ==================== ADMIN LOGIN ====================
 
-const ADMIN_PASSWORD = 'failfrenzy2026';
-
 const AdminLogin: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const verifyAdmin = trpc.auth.verifyAdmin.useMutation();
+
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === ADMIN_PASSWORD) {
-      localStorage.setItem('failfrenzy_admin_auth', 'true');
-      onLogin();
-    } else {
+    setLoading(true);
+    try {
+      const result = await verifyAdmin.mutateAsync({ password });
+      if (result.success) {
+        localStorage.setItem('failfrenzy_admin_auth', 'true');
+        onLogin();
+      } else {
+        setError(true);
+        setTimeout(() => setError(false), 2000);
+      }
+    } catch {
       setError(true);
       setTimeout(() => setError(false), 2000);
+    } finally {
+      setLoading(false);
     }
-  };
+  }, [password, verifyAdmin, onLogin]);
 
   return (
     <div className="min-h-screen flex items-center justify-center" style={{ background: '#050818' }}>
@@ -68,12 +79,12 @@ const AdminLogin: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
         <form onSubmit={handleSubmit}>
           <input type="password" value={password} onChange={e => setPassword(e.target.value)}
             placeholder="Mot de passe admin"
-            className="w-full px-4 py-3 rounded-xl text-sm font-mono text-white placeholder-gray-600 mb-4 outline-none transition-all focus:ring-2"
-            style={{ background: 'rgba(255,255,255,0.05)', border: error ? '1px solid #ff4444' : '1px solid rgba(0,240,255,0.15)', focusRingColor: '#00f0ff' }} />
-          <button type="submit"
-            className="w-full py-3 rounded-xl font-bold text-sm transition-all hover:scale-105"
+            className="w-full px-4 py-3 rounded-xl text-sm font-mono text-white placeholder-gray-600 mb-4 outline-none transition-all focus:ring-2 focus:ring-[#00f0ff]"
+            style={{ background: 'rgba(255,255,255,0.05)', border: error ? '1px solid #ff4444' : '1px solid rgba(0,240,255,0.15)' }} />
+          <button type="submit" disabled={loading}
+            className="w-full py-3 rounded-xl font-bold text-sm transition-all hover:scale-105 disabled:opacity-50"
             style={{ background: 'linear-gradient(135deg, #00f0ff, #ff00ff)', color: '#000' }}>
-            ACCÉDER AU DASHBOARD
+            {loading ? '...' : 'ACCÉDER AU DASHBOARD'}
           </button>
           {error && <p className="text-center text-xs mt-3" style={{ color: '#ff4444' }}>Mot de passe incorrect</p>}
         </form>

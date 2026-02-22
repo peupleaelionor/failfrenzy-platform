@@ -1,13 +1,26 @@
+import { eq } from "drizzle-orm";
 import { Request, Response } from "express";
-import Stripe from "stripe";
+import type Stripe from "stripe";
+import { users } from "../../drizzle/schema";
 import * as db from "../db";
+import { getStripeClient } from "./client";
 import { getProductByPriceId, isPremiumProduct, isTokenProduct, STRIPE_PRODUCTS } from "./products";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
-  apiVersion: "2026-01-28.clover",
-});
+async function findUserByStripeCustomerId(customerId: string) {
+  const dbInstance = await db.getDb();
+  if (!dbInstance) return null;
+
+  const result = await dbInstance
+    .select()
+    .from(users)
+    .where(eq(users.stripeCustomerId, customerId))
+    .limit(1);
+
+  return result.length > 0 ? result[0] : null;
+}
 
 export async function handleStripeWebhook(req: Request, res: Response) {
+  const stripe = getStripeClient();
   const sig = req.headers["stripe-signature"];
 
   if (!sig) {
@@ -19,9 +32,10 @@ export async function handleStripeWebhook(req: Request, res: Response) {
 
   try {
     event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET || "");
-  } catch (err: any) {
-    console.error("[Stripe Webhook] Signature verification failed:", err.message);
-    return res.status(400).send(`Webhook Error: ${err.message}`);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    console.error("[Stripe Webhook] Signature verification failed:", message);
+    return res.status(400).send("Webhook signature verification failed");
   }
 
   // Handle test events
@@ -68,6 +82,7 @@ export async function handleStripeWebhook(req: Request, res: Response) {
 }
 
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
+  const stripe = getStripeClient();
   console.log("[Stripe] Checkout completed:", session.id);
 
   const userId = parseInt(session.metadata?.user_id || "0");
@@ -79,11 +94,9 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   const mode = session.mode;
 
   if (mode === "subscription") {
-    // Premium subscription
     const subscriptionId = session.subscription as string;
     const customerId = session.customer as string;
 
-    // Get subscription details
     const subscription = await stripe.subscriptions.retrieve(subscriptionId);
     const priceId = subscription.items?.data?.[0]?.price?.id;
 
@@ -99,13 +112,11 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
       return;
     }
 
-    // Calculate expiration date
-    const expiresAt = new Date((subscription as any).current_period_end * 1000);
+    const periodEnd = (subscription as unknown as Record<string, unknown>).current_period_end;
+    const expiresAt = new Date((periodEnd as number) * 1000);
 
-    // Update user premium status
     await db.setPremiumStatus(userId, true, expiresAt, customerId);
 
-    // Record purchase
     await db.createPurchase({
       userId,
       type: "subscription",
@@ -119,7 +130,6 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 
     console.log(`[Stripe] Premium activated for user ${userId} until ${expiresAt}`);
   } else if (mode === "payment") {
-    // One-time payment (tokens)
     const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
     const priceId = lineItems.data[0]?.price?.id;
 
@@ -138,10 +148,8 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     const product = STRIPE_PRODUCTS[productKey];
     const tokens = "tokens" in product ? product.tokens : 0;
 
-    // Add tokens to user
     await db.addTokens(userId, tokens, "purchase", `Purchased ${tokens} tokens`);
 
-    // Record purchase
     await db.createPurchase({
       userId,
       type: "tokens",
@@ -157,36 +165,28 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 }
 
 async function handleInvoicePaid(invoice: Stripe.Invoice) {
+  const stripe = getStripeClient();
   console.log("[Stripe] Invoice paid:", invoice.id);
 
   const customerId = invoice.customer as string;
-  const subscriptionId = (invoice as any).subscription as string;
+  const subscriptionId = (invoice as unknown as Record<string, unknown>).subscription as string;
 
   if (!subscriptionId) return;
 
-  // Get subscription
   const subscription = await stripe.subscriptions.retrieve(subscriptionId);
 
-  // Find user by customer ID
-  const db_instance = await db.getDb();
-  if (!db_instance) return;
-
-  const { users: usersTable } = await import("../../drizzle/schema");
-  const { eq } = await import("drizzle-orm");
-  const users = await db_instance.select().from(usersTable).where(eq(usersTable.stripeCustomerId, customerId));
-
-  if (users.length === 0) {
+  const user = await findUserByStripeCustomerId(customerId);
+  if (!user) {
     console.error("[Stripe] No user found for customer:", customerId);
     return;
   }
 
-  const userId = users[0]!.id;
-  const expiresAt = new Date((subscription as any).current_period_end * 1000);
+  const periodEnd = (subscription as unknown as Record<string, unknown>).current_period_end;
+  const expiresAt = new Date((periodEnd as number) * 1000);
 
-  // Renew premium
-  await db.setPremiumStatus(userId, true, expiresAt, customerId);
+  await db.setPremiumStatus(user.id, true, expiresAt, customerId);
 
-  console.log(`[Stripe] Premium renewed for user ${userId} until ${expiresAt}`);
+  console.log(`[Stripe] Premium renewed for user ${user.id} until ${expiresAt}`);
 }
 
 async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
@@ -194,24 +194,15 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
 
   const customerId = subscription.customer as string;
 
-  // Find user
-  const db_instance = await db.getDb();
-  if (!db_instance) return;
-
-  const { users: usersTable } = await import("../../drizzle/schema");
-  const { eq } = await import("drizzle-orm");
-  const users = await db_instance.select().from(usersTable).where(eq(usersTable.stripeCustomerId, customerId));
-
-  if (users.length === 0) return;
-
-  const userId = users[0]!.id;
+  const user = await findUserByStripeCustomerId(customerId);
+  if (!user) return;
 
   if (subscription.status === "active") {
-    const expiresAt = new Date((subscription as any).current_period_end * 1000);
-    await db.setPremiumStatus(userId, true, expiresAt, customerId);
+    const periodEnd = (subscription as unknown as Record<string, unknown>).current_period_end;
+    const expiresAt = new Date((periodEnd as number) * 1000);
+    await db.setPremiumStatus(user.id, true, expiresAt, customerId);
   } else {
-    // Subscription paused or past_due
-    await db.setPremiumStatus(userId, false, undefined, customerId);
+    await db.setPremiumStatus(user.id, false, undefined, customerId);
   }
 }
 
@@ -220,25 +211,14 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
 
   const customerId = subscription.customer as string;
 
-  // Find user
-  const db_instance = await db.getDb();
-  if (!db_instance) return;
+  const user = await findUserByStripeCustomerId(customerId);
+  if (!user) return;
 
-  const { users: usersTable } = await import("../../drizzle/schema");
-  const { eq } = await import("drizzle-orm");
-  const users = await db_instance.select().from(usersTable).where(eq(usersTable.stripeCustomerId, customerId));
+  await db.setPremiumStatus(user.id, false, undefined, customerId);
 
-  if (users.length === 0) return;
-
-  const userId = users[0]!.id;
-
-  // Remove premium
-  await db.setPremiumStatus(userId, false, undefined, customerId);
-
-  console.log(`[Stripe] Premium removed for user ${userId}`);
+  console.log(`[Stripe] Premium removed for user ${user.id}`);
 }
 
 async function handlePaymentSucceeded(paymentIntent: Stripe.PaymentIntent) {
   console.log("[Stripe] Payment succeeded:", paymentIntent.id);
-  // Additional logic if needed
 }
