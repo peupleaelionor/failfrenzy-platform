@@ -312,11 +312,11 @@ export class FailFrenzyGame {
     this.activeSkin = getSelectedSkin();
 
     // Initialize systems
-    this.renderer = new NeonRenderer(engine['ctx'], engine['config']);
+    this.renderer = new NeonRenderer(engine['ctx'], engine['config'].width, engine['config'].height);
     this.physics = new PhysicsSystem();
     this.audio = new AudioSystem();
     this.combo = new ComboSystem();
-    this.difficulty = new DifficultySystem(mode.difficulty);
+    this.difficulty = new DifficultySystem({ baseSpeed: mode.difficulty * 100 });
     this.particles = new ParticleSystem();
     this.powerups = new PowerUpSystem();
     this.vfxPool = new ParticlePool(600);
@@ -358,10 +358,9 @@ export class FailFrenzyGame {
     this.initBackgroundStars();
     this.setupControls();
 
-    // Start engine loop
-    this.engine.onUpdate((dt) => this.updateGameLogic(dt));
-    this.engine.onRender(() => this.renderGame());
-    this.engine.start();
+    // Register update and render callbacks
+    this.engine.addSystem((dt: number) => this.updateGameLogic(dt));
+    this.engine.addSystem((_dt: number) => this.renderGame());
   }
 
   private initBackgroundStars(): void {
@@ -476,7 +475,7 @@ export class FailFrenzyGame {
   }
 
   private spawnObstacle(): void {
-    const kind = pickObstacleType(this.difficulty.getDifficultyLevel());
+    const kind = pickObstacleType();
     const y = 60 + Math.random() * 480;
     const obstacle: Entity = {
       id: `obs-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
@@ -528,6 +527,8 @@ export class FailFrenzyGame {
         this.engine.removeEntity(obs.id);
         this.obstacles.splice(i, 1);
         this.orbiterAnchors.delete(obs.id);
+        // Score points for dodging this obstacle
+        this.combo.addScore('dodge', obs.x, obs.y);
       }
     }
   }
@@ -568,17 +569,44 @@ export class FailFrenzyGame {
   private onFail(): void {
     this.shieldHP--;
     this.shake(300);
+    this.combo.breakCombo();
+    this.engine.setState({ fails: this.engine.getState().fails + 1 });
     if (this.shieldHP <= 0) this.gameOver(false);
     else this.screenFlash = { color: '#ff0000', alpha: 0.5 };
   }
 
   private gameOver(win: boolean): void {
-    this.engine.setState({ isGameOver: true });
+    this.engine.setState({ isGameOver: true, score: this.combo.getScore() });
     this.featureManager.onGameOver(this.combo.getScore());
   }
 
   private restart(): void {
     window.location.reload();
+  }
+
+  // Public API for GameComponents
+  public start(): void {
+    this.engine.start();
+  }
+
+  public getState(): GameState {
+    return this.engine.getState();
+  }
+
+  public destroy(): void {
+    this.engine.destroy();
+  }
+
+  public pause(): void {
+    this.engine.pause();
+  }
+
+  public resume(): void {
+    this.engine.resume();
+  }
+
+  public restartGame(): void {
+    this.restart();
   }
 
   private constrainPlayer(): void {
