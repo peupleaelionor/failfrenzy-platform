@@ -57,6 +57,9 @@ export class GameEngine {
   private particles: Array<any>;
   private cameraShake: { x: number; y: number; intensity: number };
   
+  private updateCallbacks: Array<(dt: number) => void>;
+  private renderCallbacks: Array<() => void>;
+  
   constructor(canvasId: string, config: Partial<GameConfig> = {}) {
     this.canvas = document.getElementById(canvasId) as HTMLCanvasElement;
     if (!this.canvas) {
@@ -81,6 +84,8 @@ export class GameEngine {
     this.systems = [];
     this.particles = [];
     this.cameraShake = { x: 0, y: 0, intensity: 0 };
+    this.updateCallbacks = [];
+    this.renderCallbacks = [];
     
     this.state = {
       score: 0,
@@ -191,6 +196,15 @@ export class GameEngine {
     this.systems.push(system);
   }
   
+  // Callback registration
+  public onUpdate(callback: (dt: number) => void): void {
+    this.updateCallbacks.push(callback);
+  }
+  
+  public onRender(callback: () => void): void {
+    this.renderCallbacks.push(callback);
+  }
+  
   // Game Loop
   public start(): void {
     if (this.animationId !== null) return;
@@ -234,6 +248,11 @@ export class GameEngine {
     // Run systems
     for (const system of Array.from(this.systems)) {
       system(dt);
+    }
+    
+    // Run update callbacks
+    for (const cb of this.updateCallbacks) {
+      cb(dt);
     }
     
     // Update entities
@@ -290,11 +309,10 @@ export class GameEngine {
   }
   
   private render(): void {
-    // NOTE: Rendering is fully handled by FailFrenzyGame.renderGame()
-    // which is registered as a system. The engine only clears the canvas.
-    // All entity rendering (diamond player, obstacles, VFX) is custom.
-    // DO NOT render entities here — it would draw ugly rectangles over
-    // the premium diamond/triangle/hexagon shapes.
+    // Run registered render callbacks (FailFrenzyGame.renderGame handles all rendering)
+    for (const cb of this.renderCallbacks) {
+      cb();
+    }
   }
   
   private renderEntity(entity: Entity): void {
@@ -419,6 +437,8 @@ export class GameEngine {
     this.entities.clear();
     this.systems = [];
     this.particles = [];
+    this.updateCallbacks = [];
+    this.renderCallbacks = [];
     this.eventHandlers.clear();
   }
 }
