@@ -92,7 +92,7 @@ export class IntegratedGameManager {
   /**
    * Update tous les systèmes
    */
-  update(dt: number, playerX: number, playerY: number): void {
+  update(dt: number, playerX: number, playerY: number): any {
     // Update Xylos
     if (this.flags.xylos) {
       this.xylos.update(dt);
