@@ -57,6 +57,11 @@ if (typeof window !== 'undefined') {
 // INTEGRATED GAME MANAGER
 // ============================================================
 
+export interface NarrativeEffect {
+  type: string;
+  force: { x: number; y: number };
+}
+
 export class IntegratedGameManager {
   private xylos: XylosSystem;
   private messages: DynamicMessageSystem;
@@ -92,7 +97,7 @@ export class IntegratedGameManager {
   /**
    * Update tous les systèmes
    */
-  update(dt: number, playerX: number, playerY: number): any {
+  update(dt: number, playerX: number, playerY: number): NarrativeEffect[] | undefined {
     // Update Xylos
     if (this.flags.xylos) {
       this.xylos.update(dt);

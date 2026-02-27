@@ -18,7 +18,7 @@ import { PowerUpSystem, PowerUp } from '../systems/PowerUpSystem';
 import { AssetLoader } from './AssetLoader';
 import { getConfig, pickObstacleType, type GameConfig } from './CONFIG';
 import { getSelectedSkin, type SkinDefinition } from './SkinSystem';
-import { getIntegratedGameManager, IntegratedGameManager } from './FeatureIntegration';
+import { getIntegratedGameManager, IntegratedGameManager, NarrativeEffect } from './FeatureIntegration';
 
 // ============================================================
 // TYPES
@@ -442,12 +442,12 @@ export class FailFrenzyGame {
     this.vfxPool.update(dt);
 
     if (this.player) {
-      const effects = this.featureManager.update(dt, this.player.x, this.player.y) as any;
-      if (effects && Array.isArray(effects)) {
-        effects.forEach((effect: any) => {
+      const effects: NarrativeEffect[] | undefined = this.featureManager.update(dt, this.player.x, this.player.y);
+      if (effects && effects.length > 0) {
+        for (const effect of effects) {
           this.player!.x += effect.force.x * dt * 100;
           this.player!.y += effect.force.y * dt * 100;
-        });
+        }
       }
     }
 
@@ -595,11 +595,11 @@ export class FailFrenzyGame {
   private onFail(): void {
     this.shieldHP--;
     this.shake(300);
-    if (this.shieldHP <= 0) this.gameOver(false);
+    if (this.shieldHP <= 0) this.gameOver();
     else this.screenFlash = { color: '#ff0000', alpha: 0.5 };
   }
 
-  private gameOver(_win: boolean): void {
+  private gameOver(): void {
     this.engine.setState({ isGameOver: true });
   }
 
