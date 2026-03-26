@@ -18,7 +18,7 @@ import { PowerUpSystem, PowerUp } from '../systems/PowerUpSystem';
 import { AssetLoader } from './AssetLoader';
 import { getConfig, pickObstacleType, type GameConfig } from './CONFIG';
 import { getSelectedSkin, type SkinDefinition } from './SkinSystem';
-import { getIntegratedGameManager, IntegratedGameManager } from './FeatureIntegration';
+import { getIntegratedGameManager, IntegratedGameManager, NarrativeEffect } from './FeatureIntegration';
 
 // ============================================================
 // TYPES
@@ -304,19 +304,20 @@ export class FailFrenzyGame {
   private blackHoles: BlackHole[] = [];
   private blackHoleSpawnTimer: number = 0;
 
-  constructor(engine: GameEngine, mode: GameMode, assets: AssetLoader) {
-    this.engine = engine;
+  constructor(canvasId: string, mode: GameMode, assets: AssetLoader) {
+    this.engine = new GameEngine(canvasId);
     this.mode = mode;
     this.assets = assets;
     this.cfg = getConfig();
     this.activeSkin = getSelectedSkin();
 
     // Initialize systems
-    this.renderer = new NeonRenderer(engine['ctx'], engine['config']);
+    const engineConfig = this.engine['config'];
+    this.renderer = new NeonRenderer(this.engine['ctx'], engineConfig.width, engineConfig.height);
     this.physics = new PhysicsSystem();
     this.audio = new AudioSystem();
     this.combo = new ComboSystem();
-    this.difficulty = new DifficultySystem(mode.difficulty);
+    this.difficulty = new DifficultySystem();
     this.particles = new ParticleSystem();
     this.powerups = new PowerUpSystem();
     this.vfxPool = new ParticlePool(600);
@@ -329,7 +330,33 @@ export class FailFrenzyGame {
     this.spawnTimer = 0;
     this.powerUpSpawnTimer = 0;
 
+    // Set initial difficulty from mode
+    if (mode.difficulty) {
+      this.difficulty.setLevel(mode.difficulty);
+    }
+
     this.init();
+  }
+
+  // Public API methods
+  public start(): void {
+    this.engine.start();
+  }
+
+  public getState(): GameState {
+    return this.engine.getState();
+  }
+
+  public destroy(): void {
+    this.engine.destroy();
+  }
+
+  public pause(): void {
+    this.engine.pause();
+  }
+
+  public resume(): void {
+    this.engine.resume();
   }
 
   private init(): void {
@@ -415,12 +442,12 @@ export class FailFrenzyGame {
     this.vfxPool.update(dt);
 
     if (this.player) {
-      const effects = this.featureManager.update(dt, this.player.x, this.player.y);
-      if (effects) {
-        effects.forEach(effect => {
+      const effects: NarrativeEffect[] | undefined = this.featureManager.update(dt, this.player.x, this.player.y);
+      if (effects && effects.length > 0) {
+        for (const effect of effects) {
           this.player!.x += effect.force.x * dt * 100;
           this.player!.y += effect.force.y * dt * 100;
-        });
+        }
       }
     }
 
@@ -476,7 +503,7 @@ export class FailFrenzyGame {
   }
 
   private spawnObstacle(): void {
-    const kind = pickObstacleType(this.difficulty.getDifficultyLevel());
+    const kind = pickObstacleType();
     const y = 60 + Math.random() * 480;
     const obstacle: Entity = {
       id: `obs-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
@@ -568,16 +595,15 @@ export class FailFrenzyGame {
   private onFail(): void {
     this.shieldHP--;
     this.shake(300);
-    if (this.shieldHP <= 0) this.gameOver(false);
+    if (this.shieldHP <= 0) this.gameOver();
     else this.screenFlash = { color: '#ff0000', alpha: 0.5 };
   }
 
-  private gameOver(win: boolean): void {
+  private gameOver(): void {
     this.engine.setState({ isGameOver: true });
-    this.featureManager.onGameOver(this.combo.getScore());
   }
 
-  private restart(): void {
+  public restart(): void {
     window.location.reload();
   }
 
