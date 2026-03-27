@@ -108,3 +108,6 @@ temp/
 
 # Webdev artifacts (checkpoint zips, migrations, etc.)
 .webdev/
+
+# Archive files (prevent accidental commits of old assets)
+*.zip
