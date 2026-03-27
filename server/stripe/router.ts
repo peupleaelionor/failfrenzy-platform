@@ -4,9 +4,23 @@ import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
 import { STRIPE_PRODUCTS } from "./products";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
-  apiVersion: "2026-01-28.clover",
-});
+let _stripe: Stripe | null = null;
+
+function getStripe(): Stripe {
+  if (!_stripe) {
+    const key = process.env.STRIPE_SECRET_KEY;
+    if (!key) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Stripe secret key is not configured",
+      });
+    }
+    _stripe = new Stripe(key, {
+      apiVersion: "2026-01-28.clover",
+    });
+  }
+  return _stripe;
+}
 
 export const stripeRouter = router({
   createCheckout: protectedProcedure
@@ -30,7 +44,7 @@ export const stripeRouter = router({
       const mode = input.productKey.startsWith("PREMIUM") ? "subscription" : "payment";
 
       try {
-        const session = await stripe.checkout.sessions.create({
+        const session = await getStripe().checkout.sessions.create({
           mode,
           customer_email: user.email || undefined,
           client_reference_id: user.id.toString(),
@@ -76,7 +90,7 @@ export const stripeRouter = router({
     }
 
     try {
-      const session = await stripe.billingPortal.sessions.create({
+      const session = await getStripe().billingPortal.sessions.create({
         customer: user.stripeCustomerId,
         return_url: `${origin}/premium`,
       });

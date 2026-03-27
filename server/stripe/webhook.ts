@@ -3,9 +3,20 @@ import Stripe from "stripe";
 import * as db from "../db";
 import { getProductByPriceId, isPremiumProduct, isTokenProduct, STRIPE_PRODUCTS } from "./products";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
-  apiVersion: "2026-01-28.clover",
-});
+let _stripe: Stripe | null = null;
+
+function getStripe(): Stripe {
+  if (!_stripe) {
+    const key = process.env.STRIPE_SECRET_KEY;
+    if (!key) {
+      throw new Error("Stripe secret key is not configured");
+    }
+    _stripe = new Stripe(key, {
+      apiVersion: "2026-01-28.clover",
+    });
+  }
+  return _stripe;
+}
 
 export async function handleStripeWebhook(req: Request, res: Response) {
   const sig = req.headers["stripe-signature"];
@@ -18,7 +29,7 @@ export async function handleStripeWebhook(req: Request, res: Response) {
   let event: Stripe.Event;
 
   try {
-    event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET || "");
+    event = getStripe().webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET || "");
   } catch (err: any) {
     console.error("[Stripe Webhook] Signature verification failed:", err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
@@ -84,7 +95,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     const customerId = session.customer as string;
 
     // Get subscription details
-    const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+    const subscription = await getStripe().subscriptions.retrieve(subscriptionId);
     const priceId = subscription.items?.data?.[0]?.price?.id;
 
     if (!priceId) {
@@ -120,7 +131,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     console.log(`[Stripe] Premium activated for user ${userId} until ${expiresAt}`);
   } else if (mode === "payment") {
     // One-time payment (tokens)
-    const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
+    const lineItems = await getStripe().checkout.sessions.listLineItems(session.id);
     const priceId = lineItems.data[0]?.price?.id;
 
     if (!priceId) {
@@ -165,7 +176,7 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
   if (!subscriptionId) return;
 
   // Get subscription
-  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+  const subscription = await getStripe().subscriptions.retrieve(subscriptionId);
 
   // Find user by customer ID
   const db_instance = await db.getDb();
