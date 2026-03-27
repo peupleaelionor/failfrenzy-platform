@@ -9,7 +9,7 @@ function getStripe(): Stripe {
   if (!_stripe) {
     const key = process.env.STRIPE_SECRET_KEY;
     if (!key) {
-      throw new Error("Stripe secret key is not configured");
+      throw new Error("Stripe secret key is not configured. Please set STRIPE_SECRET_KEY environment variable.");
     }
     _stripe = new Stripe(key, {
       apiVersion: "2026-01-28.clover",

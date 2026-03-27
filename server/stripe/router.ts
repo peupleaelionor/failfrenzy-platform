@@ -12,7 +12,7 @@ function getStripe(): Stripe {
     if (!key) {
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
-        message: "Stripe secret key is not configured",
+        message: "Stripe secret key is not configured. Please set STRIPE_SECRET_KEY environment variable.",
       });
     }
     _stripe = new Stripe(key, {
