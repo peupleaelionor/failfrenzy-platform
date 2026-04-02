@@ -103,7 +103,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     const productKey = getProductByPriceId(priceId);
     if (!productKey || !isPremiumProduct(productKey)) return;
 
-    const expiresAt = new Date((subscription as any).current_period_end * 1000);
+    const expiresAt = new Date(subscription.current_period_end * 1000);
     await db.setPremiumStatus(userId, true, expiresAt, customerId);
     await db.createPurchase({
       userId,
@@ -150,7 +150,7 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
 
   const userId = usersResult[0]!.id;
   if (subscription.status === "active") {
-    const expiresAt = new Date((subscription as any).current_period_end * 1000);
+    const expiresAt = new Date(subscription.current_period_end * 1000);
     await db.setPremiumStatus(userId, true, expiresAt, customerId);
   } else {
     await db.setPremiumStatus(userId, false, undefined, customerId);
@@ -172,7 +172,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
 
 async function handleInvoicePaid(invoice: Stripe.Invoice) {
   const customerId = invoice.customer as string;
-  const subscriptionId = (invoice as any).subscription as string;
+  const subscriptionId = invoice.subscription as string;
   if (!subscriptionId) return;
 
   const subscription = await getStripe().subscriptions.retrieve(subscriptionId);
@@ -185,6 +185,6 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
   if (usersResult.length === 0) return;
 
   const userId = usersResult[0]!.id;
-  const expiresAt = new Date((subscription as any).current_period_end * 1000);
+  const expiresAt = new Date(subscription.current_period_end * 1000);
   await db.setPremiumStatus(userId, true, expiresAt, customerId);
 }
