@@ -205,3 +205,6 @@ export const userStats = pgTable("user_stats", {
   lastPlayedAt: timestamp("last_played_at"),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
+
+export type UserStats = typeof userStats.$inferSelect;
+export type InsertUserStats = typeof userStats.$inferInsert;

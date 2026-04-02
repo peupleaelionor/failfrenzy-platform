@@ -7,10 +7,9 @@ type AuthenticatedUser = NonNullable<TrpcContext["user"]>;
 function createAuthContext(userId: number = 1): TrpcContext {
   const user: AuthenticatedUser = {
     id: userId,
-    openId: `test-user-${userId}`,
+    supabaseId: `test-supabase-${userId}`,
     email: `user${userId}@test.com`,
     name: `Test User ${userId}`,
-    loginMethod: "supabase",
     role: "user",
     isPremium: 0,
     premiumExpiresAt: null,
@@ -23,13 +22,6 @@ function createAuthContext(userId: number = 1): TrpcContext {
 
   return {
     user,
-    req: {
-      protocol: "https",
-      headers: { origin: "https://failfrenzy.com" },
-    } as TrpcContext["req"],
-    res: {
-      clearCookie: () => {},
-    } as TrpcContext["res"],
   };
 }
 
