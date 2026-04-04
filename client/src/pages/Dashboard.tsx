@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'wouter';
 import NavBar from '@/components/NavBar';
 import Footer from '@/components/Footer';
 import StarField from '@/components/StarField';
+import { getExperienceSystem } from '@/systems/ExperienceSystem';
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -76,10 +77,37 @@ function getXylosState(totalScore: number) {
 
 export default function Dashboard() {
   const [stats] = useState(getStats);
-  const [tokens] = useState(getTokens);
+  const [tokens, setTokens] = useState(getTokens);
   const [playerName, setPlayerName] = useState(() => localStorage.getItem('failfrenzy_name') || '');
   const [isEditing, setIsEditing] = useState(false);
   const [nameInput, setNameInput] = useState(playerName);
+  const [dailyBonusMsg, setDailyBonusMsg] = useState<string | null>(null);
+
+  const xpSystem = getExperienceSystem();
+  const [level, setLevel] = useState(xpSystem.getLevel());
+  const [levelProgress, setLevelProgress] = useState(xpSystem.getLevelProgress());
+  const [levelTitle, setLevelTitle] = useState(xpSystem.getLevelTitle());
+  const [levelColor, setLevelColor] = useState(xpSystem.getLevelColor());
+  const [streak, setStreak] = useState(xpSystem.getStreak());
+  const [currentXP, setCurrentXP] = useState(xpSystem.getCurrentLevelXP());
+  const [xpToNext, setXpToNext] = useState(xpSystem.getXPToNextLevel());
+  const [dailyClaimed, setDailyClaimed] = useState(xpSystem.isDailyBonusClaimed());
+
+  const claimDailyBonus = () => {
+    const bonus = xpSystem.claimDailyBonus();
+    if (bonus) {
+      setDailyBonusMsg(`+${bonus.xp} XP & +${bonus.tokens} Tokens !`);
+      setLevel(xpSystem.getLevel());
+      setLevelProgress(xpSystem.getLevelProgress());
+      setLevelTitle(xpSystem.getLevelTitle());
+      setLevelColor(xpSystem.getLevelColor());
+      setCurrentXP(xpSystem.getCurrentLevelXP());
+      setXpToNext(xpSystem.getXPToNextLevel());
+      setDailyClaimed(true);
+      setTokens(getTokens());
+      setTimeout(() => setDailyBonusMsg(null), 3000);
+    }
+  };
 
   const saveName = () => {
     const name = nameInput.trim().slice(0, 20);
@@ -125,14 +153,15 @@ export default function Dashboard() {
               }}
             />
             <div
-              className="absolute -bottom-1 -right-1 w-9 h-9 rounded-full flex items-center justify-center text-xs font-black"
+              className="absolute -bottom-1 -right-1 w-11 h-11 rounded-full flex items-center justify-center text-sm font-black"
               style={{
-                background: 'linear-gradient(135deg, #00f0ff, #ff00ff)',
-                boxShadow: '0 0 15px rgba(0,240,255,0.5)',
+                background: `linear-gradient(135deg, ${levelColor}, ${levelColor}DD)`,
+                boxShadow: `0 0 15px ${levelColor}80`,
                 color: '#050818',
+                border: `2px solid ${levelColor}`,
               }}
             >
-              {stats.totalGames > 50 ? 'V' : stats.totalGames > 10 ? 'A' : 'N'}
+              {level}
             </div>
           </div>
 
@@ -192,9 +221,114 @@ export default function Dashboard() {
               </svg>
             </div>
           )}
+          <p className="text-xs font-black tracking-wider mb-1" style={{ color: levelColor, textShadow: `0 0 10px ${levelColor}60` }}>
+            {levelTitle}
+          </p>
           <p className="text-gray-600 text-xs font-mono tracking-wider">
             Clique sur ton nom pour le modifier
           </p>
+        </div>
+
+        {/* ============ LEVEL & XP BAR ============ */}
+        <div
+          className="p-5 rounded-2xl mb-6"
+          style={{
+            background: `linear-gradient(135deg, ${levelColor}08 0%, rgba(5,8,24,0.9) 100%)`,
+            border: `1px solid ${levelColor}25`,
+          }}
+        >
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3">
+              <div
+                className="w-12 h-12 rounded-xl flex items-center justify-center text-xl font-black"
+                style={{
+                  background: `${levelColor}18`,
+                  border: `2px solid ${levelColor}50`,
+                  color: levelColor,
+                  boxShadow: `0 0 20px ${levelColor}25`,
+                }}
+              >
+                {level}
+              </div>
+              <div>
+                <h3 className="text-sm font-black tracking-wider" style={{ color: levelColor }}>
+                  NIVEAU {level}
+                </h3>
+                <p className="text-xs text-gray-500 font-mono">{levelTitle}</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <span className="text-xs font-mono text-gray-500">
+                {currentXP} / {xpToNext > 0 ? xpToNext : '∞'} XP
+              </span>
+              {level < 50 && (
+                <p className="text-[10px] text-gray-600 font-mono">
+                  → Niveau {level + 1}
+                </p>
+              )}
+            </div>
+          </div>
+          <div
+            className="h-3 rounded-full overflow-hidden"
+            style={{ background: 'rgba(255,255,255,0.06)' }}
+          >
+            <div
+              className="h-full rounded-full transition-all duration-700"
+              style={{
+                width: `${Math.min(levelProgress * 100, 100)}%`,
+                background: `linear-gradient(90deg, ${levelColor}, ${levelColor}80)`,
+                boxShadow: `0 0 12px ${levelColor}60`,
+              }}
+            />
+          </div>
+
+          {/* Streak & Daily Bonus */}
+          <div className="flex items-center justify-between mt-4">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">🔥</span>
+              <div>
+                <span className="text-xs font-black" style={{ color: streak >= 3 ? '#ff8800' : '#ffffff60' }}>
+                  {streak} JOUR{streak > 1 ? 'S' : ''} DE SUITE
+                </span>
+                <p className="text-[10px] text-gray-600 font-mono">
+                  Bonus XP +{Math.min(streak * 10, 50)}%
+                </p>
+              </div>
+            </div>
+            {!dailyClaimed ? (
+              <button
+                onClick={claimDailyBonus}
+                className="px-4 py-2 rounded-xl text-xs font-black tracking-wider transition-all hover:scale-105 active:scale-95"
+                style={{
+                  background: 'linear-gradient(135deg, #ffd700, #ff8800)',
+                  color: '#050818',
+                  boxShadow: '0 0 20px rgba(255,215,0,0.3)',
+                  animation: 'pulse-glow 2s ease-in-out infinite',
+                }}
+              >
+                🎁 BONUS QUOTIDIEN
+              </button>
+            ) : (
+              <div className="px-4 py-2 rounded-xl text-xs font-mono" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                ✓ Bonus réclamé
+              </div>
+            )}
+          </div>
+
+          {dailyBonusMsg && (
+            <div
+              className="mt-3 text-center py-2 rounded-lg text-sm font-black animate-pulse"
+              style={{ color: '#ffd700', background: 'rgba(255,215,0,0.08)', border: '1px solid rgba(255,215,0,0.2)' }}
+            >
+              {dailyBonusMsg}
+            </div>
+          )}
+        </div>
+
+        {/* ============ TOTAL XP ============ */}
+        <div className="text-center mb-6">
+          <span className="text-xs font-mono text-gray-600">XP TOTAL : </span>
+          <span className="text-sm font-black" style={{ color: levelColor }}>{xpSystem.getTotalXP().toLocaleString()}</span>
         </div>
 
         <div
