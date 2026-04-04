@@ -1,6 +1,13 @@
 User-agent: *
 Allow: /
+Allow: /game
+Allow: /leaderboard
+Allow: /shop
+Allow: /premium
+Allow: /login
+Allow: /signup
 Disallow: /admin
-Disallow: /private
+Disallow: /dashboard
+Disallow: /api/
 
-Sitemap: /sitemap.xml
+Sitemap: https://failfrenzy.netlify.app/sitemap.xml

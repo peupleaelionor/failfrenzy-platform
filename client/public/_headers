@@ -1,0 +1,80 @@
+# Fail Frenzy – Netlify _headers
+# Route-specific headers for performance, caching, and security.
+
+# ── Global ───────────────────────────────────────────────────
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  X-XSS-Protection: 1; mode=block
+  Referrer-Policy: strict-origin-when-cross-origin
+  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()
+
+# ── HTML (always revalidate) ─────────────────────────────────
+/index.html
+  Cache-Control: public, max-age=0, must-revalidate
+  Link: </assets/*>; rel=preload
+
+# ── Vite hashed bundles (immutable) ─────────────────────────
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# ── Fonts ────────────────────────────────────────────────────
+/*.woff2
+  Cache-Control: public, max-age=31536000, immutable
+  Access-Control-Allow-Origin: *
+
+/*.woff
+  Cache-Control: public, max-age=31536000, immutable
+  Access-Control-Allow-Origin: *
+
+# ── Images (7 days + stale-while-revalidate) ─────────────────
+/*.png
+  Cache-Control: public, max-age=604800, stale-while-revalidate=86400
+
+/*.jpg
+  Cache-Control: public, max-age=604800, stale-while-revalidate=86400
+
+/*.jpeg
+  Cache-Control: public, max-age=604800, stale-while-revalidate=86400
+
+/*.webp
+  Cache-Control: public, max-age=604800, stale-while-revalidate=86400
+
+/*.svg
+  Cache-Control: public, max-age=604800, stale-while-revalidate=86400
+
+# ── Game asset directories ───────────────────────────────────
+/01_BRANDING/*
+  Cache-Control: public, max-age=604800, stale-while-revalidate=86400
+
+/02_SKINS_VAISSEAUX/*
+  Cache-Control: public, max-age=604800, stale-while-revalidate=86400
+
+/03_ENVIRONNEMENTS/*
+  Cache-Control: public, max-age=604800, stale-while-revalidate=86400
+
+/04_UI_UX/*
+  Cache-Control: public, max-age=604800, stale-while-revalidate=86400
+
+/05_MARKETING/*
+  Cache-Control: public, max-age=604800, stale-while-revalidate=86400
+
+/06_GAME_ELEMENTS/*
+  Cache-Control: public, max-age=604800, stale-while-revalidate=86400
+
+/07_VFX_EFFECTS/*
+  Cache-Control: public, max-age=604800, stale-while-revalidate=86400
+
+# ── PWA manifest ─────────────────────────────────────────────
+/manifest.json
+  Cache-Control: public, max-age=3600
+  Content-Type: application/manifest+json
+
+# ── SEO files ────────────────────────────────────────────────
+/robots.txt
+  Cache-Control: public, max-age=86400
+
+/sitemap.xml
+  Cache-Control: public, max-age=86400
+  Content-Type: application/xml; charset=utf-8
