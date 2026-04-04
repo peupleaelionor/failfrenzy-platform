@@ -70,7 +70,7 @@ const SHIP_SKINS = [
 const FEATURES = [
   { title: '4 MODES', desc: 'Classic, Time Trial, Infinite, Seeds', color: '#00f0ff', icon: 'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z' },
   { title: '10+ SKINS', desc: 'Du Commun au Legendaire avec effets uniques', color: '#ff00ff', icon: 'M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z' },
-  { title: '6 GALAXIES', desc: 'De la Nebuleuse Alpha au Coeur de Xylos', color: '#ffd700', icon: 'M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z' },
+  { title: '50 NIVEAUX', desc: '20 rangs de Recrue a Legende Cosmique', color: '#ffd700', icon: 'M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z' },
   { title: 'XYLOS', desc: 'Entite vivante a alimenter avec vos echoes', color: '#00ff88', icon: 'M13 10V3L4 14h7v7l9-11h-7z' },
 ];
 
@@ -401,6 +401,129 @@ export default function Home() {
                 <p className="text-gray-400 text-sm leading-relaxed">{f.desc}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ===== PROGRESSION SECTION ===== */}
+      <section
+        className="relative py-24 px-4"
+        id="progression"
+        data-animate
+        style={{
+          background: 'linear-gradient(180deg, transparent 0%, rgba(255,215,0,0.02) 50%, transparent 100%)',
+        }}
+      >
+        <div className={`max-w-6xl mx-auto ${sectionClass('progression')}`}>
+          <h2
+            className="text-3xl sm:text-4xl md:text-5xl font-black text-center mb-4 tracking-tight"
+            style={{
+              color: '#ffd700',
+              textShadow: '0 0 30px rgba(255,215,0,0.4)',
+            }}
+          >
+            SYSTEME DE PROGRESSION
+          </h2>
+          <p className="text-gray-500 text-center text-sm font-mono mb-16 tracking-wider">
+            50 niveaux d&apos;experience - Gagnez de l&apos;XP a chaque partie
+          </p>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* XP System */}
+            <div className="group p-6 rounded-2xl transition-all duration-500 hover:scale-105"
+              style={{
+                background: 'linear-gradient(135deg, rgba(0,240,255,0.06) 0%, rgba(5,8,24,0.8) 100%)',
+                border: '1px solid rgba(0,240,255,0.25)',
+                boxShadow: '0 0 25px rgba(0,240,255,0.1)',
+              }}>
+              <div className="w-14 h-14 rounded-xl flex items-center justify-center mb-5 text-2xl"
+                style={{ background: 'rgba(0,240,255,0.15)', border: '1px solid rgba(0,240,255,0.4)' }}>
+                ⭐
+              </div>
+              <h3 className="text-xl font-black tracking-wider mb-2" style={{ color: '#00f0ff' }}>
+                50 NIVEAUX
+              </h3>
+              <p className="text-gray-400 text-sm leading-relaxed">
+                De Recrue Stellaire a Legende Cosmique. Chaque niveau débloque des recompenses exclusives.
+              </p>
+            </div>
+
+            {/* Ranks */}
+            <div className="group p-6 rounded-2xl transition-all duration-500 hover:scale-105"
+              style={{
+                background: 'linear-gradient(135deg, rgba(255,215,0,0.06) 0%, rgba(5,8,24,0.8) 100%)',
+                border: '1px solid rgba(255,215,0,0.25)',
+                boxShadow: '0 0 25px rgba(255,215,0,0.1)',
+              }}>
+              <div className="w-14 h-14 rounded-xl flex items-center justify-center mb-5 text-2xl"
+                style={{ background: 'rgba(255,215,0,0.15)', border: '1px solid rgba(255,215,0,0.4)' }}>
+                🏆
+              </div>
+              <h3 className="text-xl font-black tracking-wider mb-2" style={{ color: '#ffd700' }}>
+                20 RANGS
+              </h3>
+              <p className="text-gray-400 text-sm leading-relaxed">
+                Pilote, Commandant, As Stellaire, Virtuose... Grimpez les echelons et affichez votre titre.
+              </p>
+            </div>
+
+            {/* Daily Streak */}
+            <div className="group p-6 rounded-2xl transition-all duration-500 hover:scale-105"
+              style={{
+                background: 'linear-gradient(135deg, rgba(255,136,0,0.06) 0%, rgba(5,8,24,0.8) 100%)',
+                border: '1px solid rgba(255,136,0,0.25)',
+                boxShadow: '0 0 25px rgba(255,136,0,0.1)',
+              }}>
+              <div className="w-14 h-14 rounded-xl flex items-center justify-center mb-5 text-2xl"
+                style={{ background: 'rgba(255,136,0,0.15)', border: '1px solid rgba(255,136,0,0.4)' }}>
+                🔥
+              </div>
+              <h3 className="text-xl font-black tracking-wider mb-2" style={{ color: '#ff8800' }}>
+                SERIES QUOTIDIENNES
+              </h3>
+              <p className="text-gray-400 text-sm leading-relaxed">
+                Jouez chaque jour pour augmenter votre multiplicateur d&apos;XP et gagner un bonus quotidien.
+              </p>
+            </div>
+          </div>
+
+          {/* Level Preview */}
+          <div className="mt-12 rounded-2xl p-6 sm:p-8" style={{
+            background: 'linear-gradient(135deg, rgba(255,215,0,0.04), rgba(5,8,24,0.95))',
+            border: '1px solid rgba(255,215,0,0.15)',
+          }}>
+            <h3 className="text-lg font-black tracking-wider text-center mb-6" style={{ color: '#ffd700' }}>
+              RANGS DU PILOTE
+            </h3>
+            <div className="flex flex-wrap justify-center gap-3">
+              {[
+                { level: 1, title: 'Recrue', color: '#607080' },
+                { level: 6, title: 'Pilote', color: '#00f0ff' },
+                { level: 16, title: 'Commandant', color: '#ffff00' },
+                { level: 26, title: 'As Stellaire', color: '#ff2d7b' },
+                { level: 36, title: 'Maitre', color: '#bb44ff' },
+                { level: 41, title: 'Legende', color: '#ffd700' },
+                { level: 50, title: 'Cosmique', color: '#ffffff' },
+              ].map((r) => (
+                <div key={r.level} className="flex items-center gap-2 px-4 py-2 rounded-xl"
+                  style={{
+                    background: `${r.color}10`,
+                    border: `1px solid ${r.color}30`,
+                  }}>
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black"
+                    style={{
+                      background: `${r.color}25`,
+                      border: `1px solid ${r.color}60`,
+                      color: r.color,
+                    }}>
+                    {r.level}
+                  </div>
+                  <span className="text-xs font-bold tracking-wider" style={{ color: r.color }}>
+                    {r.title.toUpperCase()}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>

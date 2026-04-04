@@ -21,6 +21,7 @@ import {
   CinematicIntro, TutorialOverlay,
   shouldShowTutorial, shouldShowCinematic, markCinematicSeen,
 } from './TutorialOverlay';
+import { getExperienceSystem, type XPGainBreakdown, type LevelReward } from '../systems/ExperienceSystem';
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -78,15 +79,30 @@ interface GameOverProps {
   score: number;
   fails: number;
   time: number;
+  mode?: string;
   onRestart: () => void;
 }
 
-const GameOverScreen: React.FC<GameOverProps> = ({ score, fails, time, onRestart }) => {
+const GameOverScreen: React.FC<GameOverProps> = ({ score, fails, time, mode, onRestart }) => {
   const [visible, setVisible] = useState(false);
   const [scoreAnim, setScoreAnim] = useState(0);
   const [showLB, setShowLB] = useState(false);
   const [showSkins, setShowSkins] = useState(false);
   const [skinId, setSkinId] = useState(getSelectedSkinId());
+  const [showXP, setShowXP] = useState(false);
+  const [xpAnimated, setXpAnimated] = useState(0);
+
+  // XP calculation - use ref to ensure it only runs once
+  const xpSystem = getExperienceSystem();
+  const prevLevel = useRef(xpSystem.getLevel());
+  const xpResultRef = useRef<ReturnType<typeof xpSystem.addGameXP> | null>(null);
+  if (!xpResultRef.current) {
+    xpResultRef.current = xpSystem.addGameXP(score, fails, time, 0, mode || 'classic');
+  }
+  const xpResult = xpResultRef.current;
+  const [leveledUp, setLeveledUp] = useState(false);
+  const [newLevel, setNewLevel] = useState(xpResult.newLevel);
+  const [reward, setReward] = useState<LevelReward | undefined>(xpResult.reward);
 
   const board = useMemo(() => generateLeaderboard(score), [score]);
   const top5 = useMemo(() => getCountryTop(board, 5), [board]);
@@ -99,6 +115,36 @@ const GameOverScreen: React.FC<GameOverProps> = ({ score, fails, time, onRestart
 
   useEffect(() => { setTimeout(() => setVisible(true), 50); }, []);
   useEffect(() => { updatePlayerStats(score, time); }, [score, time]);
+
+  // Check for level up
+  useEffect(() => {
+    if (xpResult.leveledUp && xpResult.newLevel > prevLevel.current) {
+      setLeveledUp(true);
+      setNewLevel(xpResult.newLevel);
+      setReward(xpResult.reward);
+    }
+  }, [xpResult]);
+
+  // XP animation
+  useEffect(() => {
+    if (!visible) return;
+    const t = setTimeout(() => setShowXP(true), 900);
+    return () => clearTimeout(t);
+  }, [visible]);
+
+  useEffect(() => {
+    if (!showXP) return;
+    const dur = 600;
+    const s = Date.now();
+    const target = xpResult.breakdown.total;
+    const anim = () => {
+      const p = Math.min((Date.now() - s) / dur, 1);
+      const e = 1 - Math.pow(1 - p, 3);
+      setXpAnimated(Math.floor(target * e));
+      if (p < 1) requestAnimationFrame(anim);
+    };
+    anim();
+  }, [showXP, xpResult.breakdown.total]);
 
   // Score count-up
   useEffect(() => {
@@ -225,10 +271,116 @@ const GameOverScreen: React.FC<GameOverProps> = ({ score, fails, time, onRestart
         </div>
 
         {/* 3. STATS COMPACT */}
-        <div className="flex items-center justify-center gap-4 mb-4 text-sm font-mono" style={{ color: 'rgba(255,255,255,0.5)' }}>
+        <div className="flex items-center justify-center gap-4 mb-3 text-sm font-mono" style={{ color: 'rgba(255,255,255,0.5)' }}>
           <span><span style={{ color: '#ff2d7b' }}>Fails</span> <span className="text-white font-bold">{fails}</span></span>
           <span style={{ color: 'rgba(255,255,255,0.15)' }}>|</span>
           <span><span style={{ color: '#00ff88' }}>Time</span> <span className="text-white font-bold">{time.toFixed(1)}s</span></span>
+        </div>
+
+        {/* 3b. XP GAIN */}
+        <div className="mb-4" style={{
+          transform: showXP ? 'translateY(0) scale(1)' : 'translateY(10px) scale(0.95)',
+          opacity: showXP ? 1 : 0,
+          transition: 'all 0.5s cubic-bezier(0.34,1.56,0.64,1)',
+        }}>
+          <div className="rounded-xl overflow-hidden" style={{
+            background: `${xpSystem.getLevelColor()}06`,
+            border: `1px solid ${xpSystem.getLevelColor()}20`,
+          }}>
+            <div className="px-3 py-2.5">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-black tracking-wider" style={{ color: xpSystem.getLevelColor() }}>
+                    EXPÉRIENCE GAGNÉE
+                  </span>
+                </div>
+                <span className="text-base font-black" style={{ color: '#ffd700', textShadow: '0 0 10px rgba(255,215,0,0.5)' }}>
+                  +{xpAnimated} XP
+                </span>
+              </div>
+              {/* XP Breakdown */}
+              <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 mb-2">
+                {xpResult.breakdown.base > 0 && (
+                  <div className="flex justify-between text-[9px] font-mono">
+                    <span style={{ color: 'rgba(255,255,255,0.35)' }}>Score</span>
+                    <span style={{ color: 'rgba(255,255,255,0.5)' }}>+{xpResult.breakdown.base}</span>
+                  </div>
+                )}
+                {xpResult.breakdown.comboBonus > 0 && (
+                  <div className="flex justify-between text-[9px] font-mono">
+                    <span style={{ color: 'rgba(255,255,255,0.35)' }}>Combo</span>
+                    <span style={{ color: '#ffff00' }}>+{xpResult.breakdown.comboBonus}</span>
+                  </div>
+                )}
+                {xpResult.breakdown.survivalBonus > 0 && (
+                  <div className="flex justify-between text-[9px] font-mono">
+                    <span style={{ color: 'rgba(255,255,255,0.35)' }}>Survie</span>
+                    <span style={{ color: '#00ff88' }}>+{xpResult.breakdown.survivalBonus}</span>
+                  </div>
+                )}
+                {xpResult.breakdown.streakBonus > 0 && (
+                  <div className="flex justify-between text-[9px] font-mono">
+                    <span style={{ color: 'rgba(255,255,255,0.35)' }}>Série 🔥</span>
+                    <span style={{ color: '#ff8800' }}>+{xpResult.breakdown.streakBonus}</span>
+                  </div>
+                )}
+                {xpResult.breakdown.modeBonus > 0 && (
+                  <div className="flex justify-between text-[9px] font-mono">
+                    <span style={{ color: 'rgba(255,255,255,0.35)' }}>Mode</span>
+                    <span style={{ color: '#bb44ff' }}>+{xpResult.breakdown.modeBonus}</span>
+                  </div>
+                )}
+                {xpResult.breakdown.failPenalty > 0 && (
+                  <div className="flex justify-between text-[9px] font-mono">
+                    <span style={{ color: 'rgba(255,255,255,0.35)' }}>Fails</span>
+                    <span style={{ color: '#ff2d7b' }}>-{xpResult.breakdown.failPenalty}</span>
+                  </div>
+                )}
+              </div>
+              {/* Level Progress Bar */}
+              <div className="flex items-center gap-2">
+                <span className="text-[9px] font-black" style={{ color: xpSystem.getLevelColor() }}>
+                  Niv. {xpSystem.getLevel()}
+                </span>
+                <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
+                  <div className="h-full rounded-full transition-all duration-1000" style={{
+                    width: `${xpSystem.getLevelProgress() * 100}%`,
+                    background: `linear-gradient(90deg, ${xpSystem.getLevelColor()}, ${xpSystem.getLevelColor()}80)`,
+                    boxShadow: `0 0 6px ${xpSystem.getLevelColor()}60`,
+                  }} />
+                </div>
+                <span className="text-[8px] font-mono" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                  {xpSystem.getLevel() < 50 ? `Niv. ${xpSystem.getLevel() + 1}` : 'MAX'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Level Up Celebration */}
+          {leveledUp && (
+            <div className="mt-2 rounded-xl overflow-hidden text-center py-3"
+              style={{
+                background: 'linear-gradient(135deg, rgba(255,215,0,0.12), rgba(255,0,255,0.08))',
+                border: '1px solid rgba(255,215,0,0.4)',
+                boxShadow: '0 0 30px rgba(255,215,0,0.15)',
+                animation: 'pulse-glow 1.5s ease-in-out infinite',
+              }}>
+              <div className="text-2xl mb-1">🎉</div>
+              <div className="text-sm font-black tracking-wider mb-1" style={{ color: '#ffd700', textShadow: '0 0 15px rgba(255,215,0,0.6)' }}>
+                NIVEAU {newLevel} ATTEINT !
+              </div>
+              <div className="text-[10px] font-bold" style={{ color: xpSystem.getLevelColor() }}>
+                {xpSystem.getLevelTitle()}
+              </div>
+              {reward && (
+                <div className="mt-2 text-[10px] font-mono" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                  {reward.badge && <span className="mr-1">{reward.badge}</span>}
+                  +{reward.tokens} Tokens
+                  {reward.skinUnlock && <span className="ml-2 text-[#ff00ff]">+ Skin débloqué !</span>}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* 4. LEADERBOARD REGIONAL */}
@@ -428,10 +580,19 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ mode, assets, onScoreUpd
         setFinalStats({ score: st.score, fails: st.fails, time: st.time });
         if (onGameOver) onGameOver(st.score, st.fails, st.time);
         try {
+          // Save high scores per mode
           const key = 'failfrenzy_highscores';
           const ex = JSON.parse(localStorage.getItem(key) || '{}');
           const mn = mode.name || 'classic';
           if (!ex[mn] || st.score > ex[mn]) { ex[mn] = st.score; localStorage.setItem(key, JSON.stringify(ex)); }
+          // Update aggregate game stats
+          const gsKey = 'failfrenzy_gamestats';
+          const gs = JSON.parse(localStorage.getItem(gsKey) || '{"totalGames":0,"totalScore":0,"totalFails":0,"totalTime":0}');
+          gs.totalGames = (gs.totalGames || 0) + 1;
+          gs.totalScore = (gs.totalScore || 0) + st.score;
+          gs.totalFails = (gs.totalFails || 0) + st.fails;
+          gs.totalTime = (gs.totalTime || 0) + Math.floor(st.time);
+          localStorage.setItem(gsKey, JSON.stringify(gs));
         } catch {}
       }
     }, 100);
@@ -520,7 +681,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ mode, assets, onScoreUpd
 
       {/* Game Over */}
       {showGameOver && finalStats && (
-        <GameOverScreen score={finalStats.score} fails={finalStats.fails} time={finalStats.time} onRestart={handleRestart} />
+        <GameOverScreen score={finalStats.score} fails={finalStats.fails} time={finalStats.time} mode={mode.name} onRestart={handleRestart} />
       )}
     </div>
   );

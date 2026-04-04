@@ -1,4 +1,5 @@
 import { Link, useLocation } from 'wouter';
+import { getExperienceSystem } from '@/systems/ExperienceSystem';
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -12,6 +13,11 @@ const NAV_LINKS = [
 
 export default function NavBar() {
   const [location] = useLocation();
+  const xp = getExperienceSystem();
+  const level = xp.getLevel();
+  const levelColor = xp.getLevelColor();
+  const levelProgress = xp.getLevelProgress();
+  const titleShort = xp.getLevelTitleShort();
 
   return (
     <nav
@@ -91,9 +97,52 @@ export default function NavBar() {
               </Link>
             );
           })}
+          {/* Level Badge */}
+          <Link href="/dashboard">
+            <div
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg cursor-pointer transition-all hover:scale-105 ml-2"
+              style={{
+                background: `${levelColor}12`,
+                border: `1px solid ${levelColor}30`,
+              }}
+            >
+              <div
+                className="relative w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black"
+                style={{
+                  background: `${levelColor}25`,
+                  border: `2px solid ${levelColor}60`,
+                  color: levelColor,
+                  boxShadow: `0 0 10px ${levelColor}30`,
+                }}
+              >
+                {level}
+                {/* Mini XP ring */}
+                <svg className="absolute inset-0" viewBox="0 0 28 28" style={{ transform: 'rotate(-90deg)' }}>
+                  <circle cx="14" cy="14" r="12" fill="none" stroke={`${levelColor}20`} strokeWidth="2" />
+                  <circle cx="14" cy="14" r="12" fill="none" stroke={levelColor} strokeWidth="2"
+                    strokeDasharray={`${levelProgress * 75.4} 75.4`} strokeLinecap="round" />
+                </svg>
+              </div>
+              <span className="text-[9px] font-bold tracking-wider hidden lg:block" style={{ color: levelColor }}>
+                {titleShort}
+              </span>
+            </div>
+          </Link>
         </div>
 
         <div className="flex md:hidden items-center gap-2">
+          <Link href="/dashboard">
+            <div
+              className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-black"
+              style={{
+                background: `${levelColor}20`,
+                border: `2px solid ${levelColor}50`,
+                color: levelColor,
+              }}
+            >
+              {level}
+            </div>
+          </Link>
           <Link href="/game">
             <button
               className="px-3 py-1.5 rounded-lg text-[10px] font-black tracking-wider"

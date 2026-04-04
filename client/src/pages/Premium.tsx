@@ -10,7 +10,8 @@ const FREE_FEATURES = [
   '3 skins gratuits',
   'Classement local',
   'Succes de base',
-  'Publicites entre les parties',
+  '50 niveaux de progression',
+  'Bonus quotidien',
 ];
 
 const PREMIUM_FEATURES = [
@@ -21,6 +22,7 @@ const PREMIUM_FEATURES = [
   { text: 'Succes premium', color: '#ffff00' },
   { text: '500 tokens/mois offerts', color: '#ff6600' },
   { text: 'Badge Crane Dore', color: '#ffd700' },
+  { text: 'Boost XP x2 permanent', color: '#bb44ff' },
 ];
 
 export default function Premium() {
