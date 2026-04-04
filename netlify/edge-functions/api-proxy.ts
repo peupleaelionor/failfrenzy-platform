@@ -54,8 +54,16 @@ export default async function handler(
   // Build response with CORS headers
   const responseHeaders = new Headers(backendResponse.headers);
 
-  const allowedOrigin =
-    Deno.env.get("SITE_URL") || url.origin;
+  const allowedOrigin = Deno.env.get("SITE_URL");
+  if (!allowedOrigin) {
+    return new Response(
+      JSON.stringify({ error: "SITE_URL not configured" }),
+      {
+        status: 502,
+        headers: { "Content-Type": "application/json" },
+      },
+    );
+  }
   responseHeaders.set("Access-Control-Allow-Origin", allowedOrigin);
   responseHeaders.set(
     "Access-Control-Allow-Methods",

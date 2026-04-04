@@ -24,14 +24,8 @@
 # Redirects (order matters – first match wins)
 # ============================================================
 
-# API proxy: forward all API calls to the backend server
-[[redirects]]
-  from = "/api/*"
-  to = "https://:BACKEND_URL/api/:splat"
-  status = 200
-  force = true
-  [redirects.headers]
-    X-From = "Netlify"
+# API calls are handled by the api-proxy edge function.
+# No redirect needed here — the edge function intercepts /api/* requests.
 
 # Static assets: let Netlify serve them directly (no rewrite)
 [[redirects]]
@@ -119,7 +113,7 @@
     Referrer-Policy = "strict-origin-when-cross-origin"
     Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
     Permissions-Policy = "camera=(), microphone=(), geolocation=(), interest-cohort=()"
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://*.netlify.app; frame-src https://js.stripe.com https://hooks.stripe.com; object-src 'none'; base-uri 'self'"
+    Content-Security-Policy = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://*.netlify.app; frame-src https://js.stripe.com https://hooks.stripe.com; object-src 'none'; base-uri 'self'"
 
 # ============================================================
 # Headers – Vite hashed assets (JS, CSS) → immutable, 1 year

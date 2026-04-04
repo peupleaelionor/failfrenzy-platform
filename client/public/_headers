@@ -13,7 +13,6 @@
 # ── HTML (always revalidate) ─────────────────────────────────
 /index.html
   Cache-Control: public, max-age=0, must-revalidate
-  Link: </assets/*>; rel=preload
 
 # ── Vite hashed bundles (immutable) ─────────────────────────
 /assets/*

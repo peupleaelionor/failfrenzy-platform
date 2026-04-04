@@ -17,7 +17,11 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 
 function PageLoader() {
   return (
-    <div className="flex items-center justify-center min-h-screen bg-[#050818]">
+    <div
+      className="flex items-center justify-center min-h-screen bg-[#050818]"
+      role="status"
+      aria-live="polite"
+    >
       <div className="animate-pulse text-[#00f0ff] text-xl font-mono">
         Chargement…
       </div>
