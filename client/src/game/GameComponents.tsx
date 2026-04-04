@@ -92,12 +92,14 @@ const GameOverScreen: React.FC<GameOverProps> = ({ score, fails, time, mode, onR
   const [showXP, setShowXP] = useState(false);
   const [xpAnimated, setXpAnimated] = useState(0);
 
-  // XP calculation
+  // XP calculation - use ref to ensure it only runs once
   const xpSystem = getExperienceSystem();
   const prevLevel = useRef(xpSystem.getLevel());
-  const xpResult = useMemo(() => {
-    return xpSystem.addGameXP(score, fails, time, 0, mode || 'classic');
-  }, [score, fails, time, mode]);
+  const xpResultRef = useRef<ReturnType<typeof xpSystem.addGameXP> | null>(null);
+  if (!xpResultRef.current) {
+    xpResultRef.current = xpSystem.addGameXP(score, fails, time, 0, mode || 'classic');
+  }
+  const xpResult = xpResultRef.current;
   const [leveledUp, setLeveledUp] = useState(false);
   const [newLevel, setNewLevel] = useState(xpResult.newLevel);
   const [reward, setReward] = useState<LevelReward | undefined>(xpResult.reward);
