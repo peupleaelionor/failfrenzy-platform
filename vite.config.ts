@@ -19,6 +19,21 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    // Code-split for better caching and faster loads on Netlify CDN
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          "react-vendor": ["react", "react-dom"],
+          "ui-vendor": [
+            "@radix-ui/react-dialog",
+            "@radix-ui/react-slot",
+            "@radix-ui/react-tabs",
+            "@radix-ui/react-tooltip",
+          ],
+          "query-vendor": ["@tanstack/react-query"],
+        },
+      },
+    },
   },
   server: {
     host: true,
