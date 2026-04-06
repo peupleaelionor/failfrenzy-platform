@@ -1,94 +1,103 @@
 # 🎮 Fail Frenzy: Échos du Vide
 
-Un jeu arcade spatial compétitif — pilotez votre Vaisseau-Écho, collectez les échos de lumière stellaire et alimentez Xylos.
+A competitive arcade space game — pilot your Echo Ship, collect stellar light echoes and fuel Xylos.
 
-## 🚀 Présentation
+## Stack
 
-**Fail Frenzy** est un jeu arcade "edge-first" conçu pour être ultra-rapide, immersif, compétitif et monétisable. Le joueur pilote un vaisseau spatial à travers des environnements cyberpunk et nébuleux, esquive des obstacles, collecte des ressources et progresse dans un récit cosmique.
+- **Frontend**: React 19 + Vite + TailwindCSS 4 + wouter (SPA)
+- **Backend**: tRPC 11 serverless functions (Vercel)
+- **Database**: PostgreSQL via Drizzle ORM (Supabase)
+- **Auth**: Supabase Auth (email/password + OAuth)
+- **Payments**: Stripe (subscriptions + one-time purchases)
+- **Game Engine**: Custom Canvas 2D (NeonRenderer, ECS architecture)
 
-### Modes de jeu
-- **Classic** — Score par survie, difficulté croissante
-- **Time Trial** — Score maximum en temps limité
-- **Infinite** — Endurance sans fin
-- **Seeds** — Runs reproductibles via seed partagé
-
-## ✨ Fonctionnalités
-
-- 🎨 Moteur de rendu Canvas 2D custom avec effets néon (NeonRenderer)
-- 🚀 Système physique complet (collisions, trajectoires)
-- 🏆 Classement global, achievements, streaks et combos
-- 🛒 Boutique de skins de vaisseaux (10+ skins avec raretés)
-- 💎 Système de tokens et progression
-- 💳 Intégration Stripe (abonnements Premium, packs de tokens)
-- 🔐 Authentification Supabase
-- 📖 Univers narratif complet (Xylos, Échos, Le Grand Silence)
-- 📱 Interface mobile-first, responsive
-
-## 🛠️ Stack Technique
-
-- **Frontend** : React 19, Vite, TailwindCSS 4, Framer Motion
-- **Backend** : Express, tRPC 11, TypeScript
-- **Base de données** : MySQL via Drizzle ORM
-- **Auth** : Supabase
-- **Paiements** : Stripe (webhooks, checkout, portail client)
-- **UI** : shadcn/ui (Radix), Lucide Icons
-- **Déploiement** : Vercel (frontend), Railway (backend)
-
-## 📂 Structure du projet
-
-```
-├── client/src/          # Application React
-│   ├── engine/          # Moteur de jeu (GameEngine, NeonRenderer, Physics)
-│   ├── game/            # Logique Fail Frenzy (FailFrenzyGame, Skins, Config)
-│   ├── systems/         # Systèmes (Audio, Achievements, Combos, Xylos...)
-│   ├── pages/           # Pages (Home, Game, Dashboard, Shop, Leaderboard...)
-│   ├── components/      # Composants React + shadcn/ui
-│   └── contexts/        # Contextes React (Theme)
-├── server/              # Backend Express + tRPC
-│   ├── _core/           # Configuration serveur, auth, tRPC
-│   └── stripe/          # Intégration Stripe (checkout, webhooks)
-├── shared/              # Types et constantes partagés
-├── drizzle/             # Schéma DB et migrations
-├── docs/                # Documentation détaillée
-└── assets/              # Assets conceptuels
-```
-
-## 🏁 Démarrage Rapide
+## Quick Start
 
 ```bash
-pnpm install
-pnpm dev
+# 1. Install dependencies
+npm install
+
+# 2. Copy environment variables
+cp .env.example .env
+# Fill in your Supabase + Stripe credentials
+
+# 3. Run database migrations
+npm run db:push
+
+# 4. Start dev server (Express + Vite)
+npm run dev
 ```
 
-### Commandes disponibles
+## Deployment (Vercel)
 
-| Commande | Description |
+The project deploys as:
+- **Frontend**: Static SPA built by Vite → `dist/public/`
+- **API**: Serverless functions in `api/` directory
+  - `api/trpc/[trpc].ts` — tRPC handler with Supabase JWT auth
+  - `api/stripe/webhook.ts` — Stripe webhook with signature verification
+
+### Vercel Environment Variables
+
+Set these in your Vercel project dashboard:
+
+| Variable | Description |
 |----------|-------------|
-| `pnpm dev` | Serveur de développement |
-| `pnpm build` | Build frontend + backend |
-| `pnpm check` | Vérification TypeScript |
-| `pnpm test` | Lancer les tests |
-| `pnpm format` | Formater le code (Prettier) |
-| `pnpm db:push` | Générer et appliquer les migrations DB |
+| `VITE_SUPABASE_URL` | Supabase project URL |
+| `VITE_SUPABASE_ANON_KEY` | Supabase anon/public key |
+| `SUPABASE_URL` | Supabase project URL (server) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key |
+| `DATABASE_URL` | PostgreSQL connection string |
+| `STRIPE_SECRET_KEY` | Stripe secret key |
+| `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret |
+| `STRIPE_PRICE_PREMIUM_MONTHLY` | Stripe price ID |
+| `STRIPE_PRICE_PREMIUM_YEARLY` | Stripe price ID |
+| `STRIPE_PRICE_TOKENS_*` | Stripe price IDs for token packs |
 
-## 📖 Documentation
+## Project Structure
 
-La documentation détaillée se trouve dans le dossier [`docs/`](./docs/) :
+```
+├── client/src/           # React SPA
+│   ├── engine/           # Game engine (GameEngine, NeonRenderer, Physics)
+│   ├── game/             # Fail Frenzy game logic (FailFrenzyGame, Skins)
+│   ├── systems/          # Game systems (Audio, Achievements, Combos...)
+│   ├── pages/            # Route pages (Home, Game, Shop, Leaderboard...)
+│   ├── components/       # UI components (shadcn/ui)
+│   └── lib/              # Utilities (trpc client, supabase client)
+├── api/                  # Vercel serverless functions
+│   ├── trpc/[trpc].ts    # tRPC API handler
+│   └── stripe/webhook.ts # Stripe webhook handler
+├── server/               # Backend logic (shared between dev + serverless)
+│   ├── _core/            # tRPC setup, context, env
+│   ├── stripe/           # Stripe integration
+│   ├── routers.ts        # All tRPC routes
+│   └── db.ts             # Database layer (Drizzle + PostgreSQL)
+├── drizzle/              # DB schema & migrations
+└── shared/               # Shared types & constants
+```
 
-- [Gameplay System](./docs/GAMEPLAY_SYSTEM.md) — Mécaniques de jeu détaillées
-- [Lore & Narrative](./docs/LORE_AND_NARRATIVE.md) — Univers et backstory
-- [Design Brief](./docs/DESIGN_BRIEF.md) — Direction artistique "Glitch Pop Arcade"
-- [UX Experience](./docs/UX_EXPERIENCE.md) — Parcours utilisateur complet
-- [Features Xylos](./docs/FEATURES_XYLOS.md) — Système Xylos et skins
-- [Optimizations](./docs/OPTIMIZATIONS.md) — Optimisations de performance
-- [Stripe Integration](./docs/STRIPE_INTEGRATION_NOTES.md) — Configuration Stripe
-- [Supabase Setup](./docs/SUPABASE_SETUP.md) — Configuration Supabase
-- [Vercel Domain Guide](./docs/VERCEL_DOMAIN_GUIDE.md) — Déploiement Vercel
+## Commands
 
-## 📄 Licence
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Dev server (Express + Vite HMR) |
+| `npm run build` | Build frontend + backend |
+| `npm run build:frontend` | Build frontend only |
+| `npm run check` | TypeScript type check |
+| `npm run test` | Run tests (Vitest) |
+| `npm run db:push` | Generate + apply DB migrations |
 
-Ce projet est sous licence MIT.
+## Game Modes
 
----
+- **Classic** — Survival scoring, increasing difficulty
+- **Time Trial** — Maximum score in limited time
+- **Infinite** — Endless endurance
+- **Seeds** — Reproducible runs via shared seed
 
-*Créé par [Kevin B. / peupleaelionor](https://github.com/peupleaelionor)*
+## Monetization
+
+- **Premium** ($4.99/mo or $39.99/yr): All modes, no ads, global leaderboard
+- **Token Packs** ($0.99–$6.99): In-game currency for cosmetic skins
+
+## License
+
+MIT

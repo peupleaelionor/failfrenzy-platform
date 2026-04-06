@@ -50,7 +50,16 @@ function Router() {
 }
 
 function App() {
-  return <Router />;
+  const [queryClient] = useState(() => createQueryClient());
+  const [trpcClient] = useState(() => createTRPCClient());
+
+  return (
+    <trpc.Provider client={trpcClient} queryClient={queryClient}>
+      <QueryClientProvider client={queryClient}>
+        <Router />
+      </QueryClientProvider>
+    </trpc.Provider>
+  );
 }
 
 export default App;
