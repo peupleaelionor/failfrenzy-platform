@@ -1,28 +1,13 @@
-import type { CreateExpressContextOptions } from "@trpc/server/adapters/express";
 import type { User } from "../../drizzle/schema";
-import { sdk } from "./sdk";
 
+/**
+ * tRPC context type.
+ * In serverless mode (Vercel), req/res are not available — user is injected from
+ * the Supabase JWT in api/trpc/[trpc].ts.
+ * In Express dev mode, req/res are available from the Express adapter.
+ */
 export type TrpcContext = {
-  req: CreateExpressContextOptions["req"];
-  res: CreateExpressContextOptions["res"];
+  req?: any;
+  res?: any;
   user: User | null;
 };
-
-export async function createContext(
-  opts: CreateExpressContextOptions
-): Promise<TrpcContext> {
-  let user: User | null = null;
-
-  try {
-    user = await sdk.authenticateRequest(opts.req);
-  } catch (error) {
-    // Authentication is optional for public procedures.
-    user = null;
-  }
-
-  return {
-    req: opts.req,
-    res: opts.res,
-    user,
-  };
-}

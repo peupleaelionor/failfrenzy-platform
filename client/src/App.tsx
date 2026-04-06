@@ -1,3 +1,6 @@
+import { useState } from "react";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { trpc, createTRPCClient, createQueryClient } from "./lib/trpc";
 import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import Home from "./pages/Home";
@@ -29,7 +32,16 @@ function Router() {
 }
 
 function App() {
-  return <Router />;
+  const [queryClient] = useState(() => createQueryClient());
+  const [trpcClient] = useState(() => createTRPCClient());
+
+  return (
+    <trpc.Provider client={trpcClient} queryClient={queryClient}>
+      <QueryClientProvider client={queryClient}>
+        <Router />
+      </QueryClientProvider>
+    </trpc.Provider>
+  );
 }
 
 export default App;
