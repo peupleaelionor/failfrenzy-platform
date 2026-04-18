@@ -9,15 +9,19 @@
  * Messages dynamiques à l'approche
  */
 
-import { Entity } from '../engine/GameEngine';
-
 // ============================================================
 // TYPES
 // ============================================================
 
 export type NarrativeObstacleType = 'vortex' | 'fissure' | 'mini_black_hole';
 
-export interface NarrativeObstacle extends Entity {
+export interface NarrativeObstacle {
+  x: number;
+  y: number;
+  vx: number;                 // Horizontal velocity
+  vy: number;                 // Vertical velocity
+  width: number;
+  height: number;
   obstacleType: NarrativeObstacleType;
   vx: number;
   vy: number;
@@ -182,6 +186,9 @@ export class NarrativeObstacleSystem {
       } else if (obs.obstacleType === 'fissure') {
         const fissureConfig = NARRATIVE_OBSTACLE_CONFIG.fissure;
         obs.intensity = 0.5 + Math.sin(obs.pulsePhase * fissureConfig.flickerSpeed) * 0.5;
+        obs.rotation += dt * NARRATIVE_OBSTACLE_CONFIG.vortex.rotationSpeed;
+      } else if (obs.obstacleType === 'fissure') {
+        obs.intensity = 0.5 + Math.sin(obs.pulsePhase * NARRATIVE_OBSTACLE_CONFIG.fissure.flickerSpeed) * 0.5;
       }
 
       // Check distance to player
@@ -225,6 +232,7 @@ export class NarrativeObstacleSystem {
   ): { x: number; y: number } | null {
 
     if (obs.obstacleType === 'vortex') {
+      const config = NARRATIVE_OBSTACLE_CONFIG.vortex;
       // Attraction vers le centre
       const vortexConfig = NARRATIVE_OBSTACLE_CONFIG.vortex;
       const strength = vortexConfig.pullStrength * (1 - distance / obs.effectRadius);
@@ -236,6 +244,7 @@ export class NarrativeObstacleSystem {
     }
 
     if (obs.obstacleType === 'mini_black_hole') {
+      const config = NARRATIVE_OBSTACLE_CONFIG.mini_black_hole;
       // Attraction forte
       const bhConfig = NARRATIVE_OBSTACLE_CONFIG.mini_black_hole;
       const strength = bhConfig.pullStrength * (1 - distance / obs.effectRadius);
@@ -247,6 +256,7 @@ export class NarrativeObstacleSystem {
     }
 
     if (obs.obstacleType === 'fissure') {
+      const config = NARRATIVE_OBSTACLE_CONFIG.fissure;
       // Distorsion perpendiculaire
       const fissureConfig = NARRATIVE_OBSTACLE_CONFIG.fissure;
       const strength = fissureConfig.distortionStrength * (1 - distance / obs.effectRadius);

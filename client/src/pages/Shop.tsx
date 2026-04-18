@@ -1,16 +1,13 @@
-/**
- * FAIL FRENZY: ÉCHOS DU VIDE - Hangar des Vaisseaux
- * Boutique de skins avec preview visuel, système de rareté, tokens locaux
- */
-
 import { useState, useEffect } from 'react';
 import { Link } from 'wouter';
 import { SKINS, type SkinDefinition, isSkinUnlocked, purchaseSkin } from '../game/SkinSystem';
 import { AssetLoader } from '../game/AssetLoader';
+import NavBar from '@/components/NavBar';
+import Footer from '@/components/Footer';
+import StarField from '@/components/StarField';
 
-const BASE = import.meta.env.BASE_URL || '/';
+const BASE = import.meta.env.BASE_URL;
 
-// Mapping rareté basé sur le prix
 function getRarity(skin: SkinDefinition): 'common' | 'rare' | 'epic' | 'legendary' {
   if (skin.tier === 'free') return 'common';
   if (!skin.price) return 'common';
@@ -19,59 +16,74 @@ function getRarity(skin: SkinDefinition): 'common' | 'rare' | 'epic' | 'legendar
   return 'legendary';
 }
 
-const RARITY = {
-  common: { label: 'COMMUN', bg: 'rgba(0,240,255,0.08)', border: 'rgba(0,240,255,0.25)', text: '#00f0ff', glow: 'rgba(0,240,255,0.2)' },
-  rare: { label: 'RARE', bg: 'rgba(0,255,136,0.08)', border: 'rgba(0,255,136,0.25)', text: '#00ff88', glow: 'rgba(0,255,136,0.2)' },
-  epic: { label: 'ÉPIQUE', bg: 'rgba(255,0,255,0.08)', border: 'rgba(255,0,255,0.25)', text: '#ff00ff', glow: 'rgba(255,0,255,0.2)' },
-  legendary: { label: 'LÉGENDAIRE', bg: 'rgba(255,215,0,0.08)', border: 'rgba(255,215,0,0.25)', text: '#ffd700', glow: 'rgba(255,215,0,0.25)' },
+const RARITY_STYLES = {
+  common: { label: 'COMMUN', color: '#00f0ff', glow: 'rgba(0,240,255,0.2)' },
+  rare: { label: 'RARE', color: '#00ff88', glow: 'rgba(0,255,136,0.2)' },
+  epic: { label: 'EPIQUE', color: '#ff00ff', glow: 'rgba(255,0,255,0.2)' },
+  legendary: { label: 'LEGENDAIRE', color: '#ffd700', glow: 'rgba(255,215,0,0.25)' },
 };
 
-function SkinPreview({ skin, size = 80 }: { skin: SkinDefinition; size?: number }) {
-  const [imgSrc, setImgSrc] = useState<string>('');
-  
+function SkinPreview({ skin, size = 100 }: { skin: SkinDefinition; size?: number }) {
+  const [imgSrc, setImgSrc] = useState('');
+
   useEffect(() => {
-    const loader = new AssetLoader();
     if (skin.imageKey) {
+      const loader = new AssetLoader();
       const img = loader.get(skin.imageKey);
       if (img) {
         setImgSrc(img.src);
       } else {
-        // Fallback: construct path manually
-        setImgSrc(`${BASE}02_SKINS_VAISSEAUX/${AssetLoader.MANIFEST[skin.imageKey]?.split('/').pop() || ''}`);
+        const filename = AssetLoader.MANIFEST[skin.imageKey]?.split('/').pop() || '';
+        setImgSrc(`${BASE}02_SKINS_VAISSEAUX/${filename}`);
       }
     }
   }, [skin]);
 
   if (imgSrc) {
     return (
-      <div style={{ width: size, height: size, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <img 
-          src={imgSrc} 
+      <div className="flex items-center justify-center" style={{ width: size, height: size }}>
+        <img
+          src={imgSrc}
           alt={skin.name}
+          className="max-w-full max-h-full object-contain"
           style={{
-            maxWidth: '100%',
-            maxHeight: '100%',
-            filter: `drop-shadow(0 0 ${size * 0.2}px ${skin.core.glowColor})`,
-            objectFit: 'contain'
+            filter: `drop-shadow(0 0 ${size * 0.15}px ${skin.core.glowColor})`,
           }}
         />
       </div>
     );
   }
 
-  // Fallback: draw diamond
-  return <div style={{ width: size, height: size, background: skin.core.color, borderRadius: '4px' }} />;
+  return (
+    <div
+      className="rounded-lg"
+      style={{
+        width: size,
+        height: size,
+        background: `linear-gradient(135deg, ${skin.core.color}, ${skin.core.glowColor})`,
+        opacity: 0.6,
+      }}
+    />
+  );
 }
 
 function getTokens(): number {
-  try { return parseInt(localStorage.getItem('failfrenzy_tokens') || '500', 10); } catch { return 500; }
+  try {
+    return parseInt(localStorage.getItem('failfrenzy_tokens') || '500', 10);
+  } catch {
+    return 500;
+  }
 }
-function setTokens(n: number) { localStorage.setItem('failfrenzy_tokens', String(n)); }
+
+function setTokens(n: number) {
+  localStorage.setItem('failfrenzy_tokens', String(n));
+}
 
 export default function Shop() {
   const [tokens, setTokensState] = useState(getTokens());
   const [filter, setFilter] = useState<'all' | 'common' | 'rare' | 'epic' | 'legendary'>('all');
   const [message, setMessage] = useState('');
+  const [selectedSkin, setSelectedSkin] = useState<SkinDefinition | null>(null);
 
   const handlePurchase = (skin: SkinDefinition) => {
     const price = skin.tier === 'free' ? 0 : (skin.price || 0);
@@ -81,137 +93,234 @@ export default function Shop() {
         const newTokens = tokens - price;
         setTokens(newTokens);
         setTokensState(newTokens);
-        setMessage(`✅ ${skin.name} équipé !`);
+        setMessage(`${skin.name} requisitionne avec succes !`);
         setTimeout(() => setMessage(''), 3000);
       }
     } else {
-      setMessage(`❌ Pas assez de tokens (besoin de ${price - tokens} de plus)`);
+      setMessage(`Pas assez de tokens (besoin de ${price - tokens} de plus)`);
       setTimeout(() => setMessage(''), 3000);
     }
   };
 
-  const filteredSkins = SKINS.filter(s => filter === 'all' || getRarity(s) === filter);
+  const filteredSkins = SKINS.filter((s) => filter === 'all' || getRarity(s) === filter);
 
   return (
-    <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0a0a1a 0%, #1a0a2e 50%, #0a0a1a 100%)', color: '#fff', fontFamily: 'system-ui, sans-serif', padding: '20px' }}>
-      {/* Header */}
-      <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '30px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <img src={`${BASE}logo-skull-glitch.png`} alt="Fail Frenzy" style={{ width: 50, height: 50 }} />
-          <h1 style={{ fontSize: '2rem', fontWeight: 900, background: 'linear-gradient(90deg, #00f0ff, #ff00ff)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', margin: 0 }}>
-            FAIL<span style={{ color: '#ff00ff' }}>FRENZY</span>
-          </h1>
-        </div>
-        <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-          <Link href="/game"><button style={{ padding: '10px 20px', background: 'rgba(0,240,255,0.1)', border: '2px solid #00f0ff', borderRadius: '8px', color: '#00f0ff', fontWeight: 700, cursor: 'pointer' }}>JOUER</button></Link>
-          <Link href="/leaderboard"><button style={{ padding: '10px 20px', background: 'rgba(255,0,255,0.1)', border: '2px solid #ff00ff', borderRadius: '8px', color: '#ff00ff', fontWeight: 700, cursor: 'pointer' }}>CLASSEMENT</button></Link>
-          <div style={{ padding: '10px 20px', background: 'rgba(255,215,0,0.1)', border: '2px solid #ffd700', borderRadius: '8px', fontWeight: 700, color: '#ffd700' }}>
-            🪙 TOKENS <span style={{ fontSize: '1.2rem', marginLeft: '5px' }}>{tokens}</span>
-          </div>
-        </div>
+    <div className="min-h-screen bg-[#050818] text-white">
+      <NavBar />
+
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div
+          className="absolute inset-0 opacity-10"
+          style={{
+            backgroundImage: `url(${BASE}03_ENVIRONNEMENTS/BG_Tunnel_Donnees.png)`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            filter: 'blur(8px)',
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#050818] via-[#050818]/80 to-[#050818]" />
       </div>
 
-      {/* Title */}
-      <div style={{ maxWidth: '1200px', margin: '0 auto 40px' }}>
-        <h2 style={{ fontSize: '2.5rem', fontWeight: 900, textAlign: 'center', marginBottom: '10px', textShadow: '0 0 20px rgba(0,240,255,0.5)' }}>
-          🚀 HANGAR DES VAISSEAUX
-        </h2>
-        <p style={{ textAlign: 'center', color: '#aaa', fontSize: '1.1rem' }}>
-          Personnalise ton Vaisseau-Écho. Collectionne. Domine le Vide Stellaire.
-        </p>
-      </div>
+      <StarField count={25} />
 
-      {/* Filters */}
-      <div style={{ maxWidth: '1200px', margin: '0 auto 30px', display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
-        {(['all', 'common', 'rare', 'epic', 'legendary'] as const).map(f => (
-          <button
-            key={f}
-            onClick={() => setFilter(f)}
+      <main className="relative z-10 px-4 pt-24 pb-10 max-w-6xl mx-auto">
+        <div className="text-center mb-10">
+          <img
+            src={`${BASE}04_UI_UX/Shop_Interface_Boutique.png`}
+            alt=""
+            className="w-20 h-20 mx-auto mb-4 object-contain"
+            style={{ filter: 'drop-shadow(0 0 20px rgba(255,0,255,0.5))' }}
+          />
+          <h1
+            className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight mb-3"
             style={{
-              padding: '10px 20px',
-              background: filter === f ? 'rgba(0,240,255,0.2)' : 'rgba(255,255,255,0.05)',
-              border: filter === f ? '2px solid #00f0ff' : '2px solid rgba(255,255,255,0.1)',
-              borderRadius: '8px',
-              color: filter === f ? '#00f0ff' : '#fff',
-              fontWeight: 700,
-              cursor: 'pointer',
-              textTransform: 'uppercase'
+              background: 'linear-gradient(135deg, #ff00ff, #00f0ff)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
             }}
           >
-            {f === 'all' ? 'TOUS' : RARITY[f].label}
-          </button>
-        ))}
-      </div>
-
-      {/* Message */}
-      {message && (
-        <div style={{ maxWidth: '1200px', margin: '0 auto 20px', padding: '15px', background: 'rgba(0,240,255,0.1)', border: '2px solid #00f0ff', borderRadius: '8px', textAlign: 'center', fontWeight: 700 }}>
-          {message}
+            HANGAR DES VAISSEAUX
+          </h1>
+          <p className="text-gray-500 text-sm font-mono tracking-wider">
+            Personnalise ton Vaisseau-Echo. Collectionne. Domine le Vide.
+          </p>
         </div>
-      )}
 
-      {/* Skins Grid */}
-      <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
-        {filteredSkins.map(skin => {
-          const rarity = getRarity(skin);
-          const rarityStyle = RARITY[rarity];
-          const owned = isSkinUnlocked(skin.id);
-          const price = skin.tier === 'free' ? 0 : (skin.price || 0);
+        <div className="flex items-center justify-between flex-wrap gap-4 mb-8">
+          <div className="flex gap-2 flex-wrap">
+            {(['all', 'common', 'rare', 'epic', 'legendary'] as const).map((f) => {
+              const style = f === 'all' ? { color: '#fff' } : RARITY_STYLES[f];
+              const c = f === 'all' ? '#fff' : style.color;
+              return (
+                <button
+                  key={f}
+                  onClick={() => setFilter(f)}
+                  className="px-4 py-2 rounded-lg text-xs font-black tracking-wider transition-all duration-200"
+                  style={{
+                    background: filter === f ? `${c}15` : 'rgba(255,255,255,0.03)',
+                    border: `1px solid ${filter === f ? `${c}50` : 'rgba(255,255,255,0.08)'}`,
+                    color: filter === f ? c : 'rgba(255,255,255,0.4)',
+                  }}
+                >
+                  {f === 'all' ? 'TOUS' : RARITY_STYLES[f].label}
+                </button>
+              );
+            })}
+          </div>
 
-          return (
-            <div
-              key={skin.id}
+          <div
+            className="px-5 py-2.5 rounded-lg font-black text-sm tracking-wider"
+            style={{
+              background: 'rgba(255,215,0,0.08)',
+              border: '1px solid rgba(255,215,0,0.3)',
+              color: '#ffd700',
+              boxShadow: '0 0 15px rgba(255,215,0,0.1)',
+            }}
+          >
+            TOKENS: {tokens}
+          </div>
+        </div>
+
+        {message && (
+          <div
+            className="mb-6 p-4 rounded-xl text-center font-bold text-sm tracking-wider"
+            style={{
+              background: message.includes('succes')
+                ? 'rgba(0,255,136,0.08)'
+                : 'rgba(255,45,123,0.08)',
+              border: `1px solid ${message.includes('succes') ? 'rgba(0,255,136,0.3)' : 'rgba(255,45,123,0.3)'}`,
+              color: message.includes('succes') ? '#00ff88' : '#ff2d7b',
+            }}
+          >
+            {message}
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {filteredSkins.map((skin) => {
+            const rarity = getRarity(skin);
+            const rs = RARITY_STYLES[rarity];
+            const owned = isSkinUnlocked(skin.id);
+            const price = skin.tier === 'free' ? 0 : (skin.price || 0);
+            const isSelected = selectedSkin?.id === skin.id;
+
+            return (
+              <div
+                key={skin.id}
+                className="group relative rounded-2xl overflow-hidden transition-all duration-300 cursor-pointer"
+                onClick={() => setSelectedSkin(isSelected ? null : skin)}
+                style={{
+                  background: `linear-gradient(135deg, ${rs.color}08 0%, rgba(5,8,24,0.95) 100%)`,
+                  border: `1px solid ${isSelected ? rs.color : `${rs.color}20`}`,
+                  boxShadow: isSelected
+                    ? `0 0 40px ${rs.glow}, inset 0 0 20px ${rs.color}08`
+                    : `0 0 15px ${rs.glow}`,
+                  transform: isSelected ? 'scale(1.02)' : 'scale(1)',
+                }}
+              >
+                <div
+                  className="absolute top-3 right-3 px-3 py-1 rounded-full text-[10px] font-black tracking-wider z-10"
+                  style={{
+                    background: `${rs.color}15`,
+                    border: `1px solid ${rs.color}40`,
+                    color: rs.color,
+                  }}
+                >
+                  {owned ? 'POSSEDE' : rs.label}
+                </div>
+
+                <div className="p-6 flex flex-col items-center">
+                  <div
+                    className="relative mb-5 transition-transform duration-500 group-hover:scale-110"
+                    style={{ minHeight: 120 }}
+                  >
+                    <div
+                      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 rounded-full opacity-40"
+                      style={{
+                        background: `radial-gradient(circle, ${rs.color}30 0%, transparent 70%)`,
+                        filter: 'blur(15px)',
+                      }}
+                    />
+                    <SkinPreview skin={skin} size={110} />
+                  </div>
+
+                  <h3
+                    className="text-xl font-black tracking-wider mb-1"
+                    style={{ color: rs.color }}
+                  >
+                    {skin.name}
+                  </h3>
+                  <p className="text-gray-500 text-xs text-center mb-5 min-h-[32px]">
+                    {skin.unlock.label}
+                  </p>
+
+                  {owned ? (
+                    <div
+                      className="w-full py-3 rounded-xl text-center text-sm font-black tracking-wider"
+                      style={{
+                        background: 'rgba(0,255,136,0.08)',
+                        border: '1px solid rgba(0,255,136,0.3)',
+                        color: '#00ff88',
+                      }}
+                    >
+                      EQUIPE
+                    </div>
+                  ) : price === 0 ? (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handlePurchase(skin);
+                      }}
+                      className="w-full py-3 rounded-xl text-sm font-black tracking-wider transition-all hover:scale-105 active:scale-95"
+                      style={{
+                        background: 'rgba(0,240,255,0.12)',
+                        border: '1px solid rgba(0,240,255,0.3)',
+                        color: '#00f0ff',
+                      }}
+                    >
+                      GRATUIT
+                    </button>
+                  ) : (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handlePurchase(skin);
+                      }}
+                      disabled={tokens < price}
+                      className="w-full py-3 rounded-xl text-sm font-black tracking-wider transition-all hover:scale-105 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                      style={{
+                        background:
+                          tokens >= price ? `${rs.color}12` : 'rgba(128,128,128,0.06)',
+                        border: `1px solid ${tokens >= price ? `${rs.color}40` : 'rgba(128,128,128,0.2)'}`,
+                        color: tokens >= price ? rs.color : '#555',
+                      }}
+                    >
+                      {price} TOKENS
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="mt-12 text-center">
+          <Link href="/game">
+            <button
+              className="px-10 py-4 rounded-xl font-black tracking-wider transition-all hover:scale-105"
               style={{
-                background: rarityStyle.bg,
-                border: `2px solid ${rarityStyle.border}`,
-                borderRadius: '12px',
-                padding: '20px',
-                position: 'relative',
-                overflow: 'hidden',
-                boxShadow: `0 0 20px ${rarityStyle.glow}`,
-                transition: 'transform 0.2s',
-                cursor: 'pointer'
+                background: 'linear-gradient(135deg, #00f0ff, #ff00ff)',
+                color: '#050818',
+                boxShadow: '0 0 30px rgba(0,240,255,0.3)',
               }}
-              onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
-              onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
             >
-              {/* Rarity Badge */}
-              <div style={{ position: 'absolute', top: 10, right: 10, padding: '5px 10px', background: rarityStyle.bg, border: `1px solid ${rarityStyle.border}`, borderRadius: '6px', fontSize: '0.7rem', fontWeight: 700, color: rarityStyle.text }}>
-                {owned ? '✅ POSSÉDÉ' : rarityStyle.label}
-              </div>
+              TESTER EN MISSION
+            </button>
+          </Link>
+        </div>
+      </main>
 
-              {/* Preview */}
-              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '15px', minHeight: '120px', alignItems: 'center' }}>
-                <SkinPreview skin={skin} size={100} />
-              </div>
-
-              {/* Info */}
-              <h3 style={{ fontSize: '1.3rem', fontWeight: 900, marginBottom: '8px', color: rarityStyle.text }}>{skin.name}</h3>
-              <p style={{ fontSize: '0.9rem', color: '#bbb', marginBottom: '15px', minHeight: '40px' }}>{skin.unlock.label}</p>
-
-              {/* Action */}
-              {owned ? (
-                <button style={{ width: '100%', padding: '12px', background: 'rgba(0,255,136,0.2)', border: '2px solid #00ff88', borderRadius: '8px', color: '#00ff88', fontWeight: 700, cursor: 'default' }}>
-                  ✅ ÉQUIPÉ
-                </button>
-              ) : price === 0 ? (
-                <button onClick={() => handlePurchase(skin)} style={{ width: '100%', padding: '12px', background: 'rgba(0,240,255,0.2)', border: '2px solid #00f0ff', borderRadius: '8px', color: '#00f0ff', fontWeight: 700, cursor: 'pointer' }}>
-                  🎁 GRATUIT
-                </button>
-              ) : (
-                <button onClick={() => handlePurchase(skin)} disabled={tokens < price} style={{ width: '100%', padding: '12px', background: tokens >= price ? rarityStyle.bg : 'rgba(128,128,128,0.1)', border: `2px solid ${tokens >= price ? rarityStyle.border : '#555'}`, borderRadius: '8px', color: tokens >= price ? rarityStyle.text : '#555', fontWeight: 700, cursor: tokens >= price ? 'pointer' : 'not-allowed' }}>
-                  🪙 {price}
-                </button>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Footer */}
-      <div style={{ maxWidth: '1200px', margin: '60px auto 0', textAlign: 'center', color: '#666', fontSize: '0.9rem' }}>
-        <p>Fail Frenzy: Échos du Vide © 2026 — Tous les skins sont cosmétiques uniquement. Aucun avantage gameplay.</p>
-      </div>
+      <Footer />
     </div>
   );
 }

@@ -3,9 +3,10 @@ import express from "express";
 import { createServer } from "http";
 import net from "net";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
-import { registerOAuthRoutes } from "./oauth";
 import { appRouter } from "../routers";
-import { createContext } from "./context";
+import type { TrpcContext } from "./context";
+import { createClient } from "@supabase/supabase-js";
+import * as db from "../db";
 import { serveStatic, setupVite } from "./vite";
 
 function isPortAvailable(port: number): Promise<boolean> {
@@ -27,15 +28,48 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
   throw new Error(`No available port found starting from ${startPort}`);
 }
 
+async function createContext({ req }: { req: express.Request; res: express.Response }): Promise<TrpcContext> {
+  let user = null;
+
+  try {
+    const authHeader = req.headers.authorization;
+    if (authHeader?.startsWith("Bearer ")) {
+      const token = authHeader.slice(7);
+      const supabaseUrl = process.env.SUPABASE_URL || "";
+      const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+      if (supabaseUrl && supabaseServiceKey) {
+        const supabase = createClient(supabaseUrl, supabaseServiceKey);
+        const { data: { user: supabaseUser }, error } = await supabase.auth.getUser(token);
+        if (supabaseUser && !error) {
+          let dbUser = await db.getUserBySupabaseId(supabaseUser.id);
+          if (!dbUser) {
+            await db.upsertUserFromSupabase({
+              supabaseId: supabaseUser.id,
+              email: supabaseUser.email ?? null,
+              name: supabaseUser.user_metadata?.username ?? supabaseUser.user_metadata?.full_name ?? null,
+            });
+            dbUser = await db.getUserBySupabaseId(supabaseUser.id);
+          }
+          user = dbUser ?? null;
+        }
+      }
+    }
+  } catch (error) {
+    user = null;
+  }
+
+  return { user } as TrpcContext;
+}
+
 async function startServer() {
   const app = express();
   const server = createServer(app);
 
-  // CORS for cross-origin requests (Vercel frontend → Railway backend)
+  // CORS
   const allowedOrigins = process.env.CORS_ORIGINS?.split(",") || ["http://localhost:5173", "http://localhost:3000"];
   app.use((req, res, next) => {
     const origin = req.headers.origin;
-    if (origin && (allowedOrigins.includes(origin) || allowedOrigins.includes("*"))) {
+    if (origin && allowedOrigins.includes(origin)) {
       res.setHeader("Access-Control-Allow-Origin", origin);
       res.setHeader("Access-Control-Allow-Credentials", "true");
       res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
@@ -51,11 +85,10 @@ async function startServer() {
   const { handleStripeWebhook } = await import("../stripe/webhook");
   app.post("/api/stripe/webhook", express.raw({ type: "application/json" }), handleStripeWebhook);
   
-  // Configure body parser with larger size limit for file uploads
+  // Configure body parser
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
-  // OAuth callback under /api/oauth/callback
-  registerOAuthRoutes(app);
+
   // tRPC API
   app.use(
     "/api/trpc",
@@ -64,6 +97,7 @@ async function startServer() {
       createContext,
     })
   );
+
   // development mode uses Vite, production mode uses static files
   if (process.env.NODE_ENV === "development") {
     await setupVite(app, server);

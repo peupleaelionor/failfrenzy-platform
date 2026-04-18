@@ -70,7 +70,7 @@ export default function Signup() {
         {/* Logo */}
         <Link href="/">
           <div className="flex items-center justify-center gap-3 mb-8 cursor-pointer group">
-            <img src={`${BASE}logo-skull-glitch.png`} alt="" className="w-16 h-auto transition-transform group-hover:rotate-12"
+            <img src={`${BASE}01_BRANDING/Logo_Principal_Skull_Glitch.png`} alt="" className="w-16 h-auto transition-transform group-hover:rotate-12"
               style={{ filter: 'drop-shadow(0 0 20px rgba(255,0,255,0.5))' }} />
             <div className="text-2xl font-black tracking-tight">
               <span style={{ color: '#00f0ff' }}>FAIL</span>

@@ -57,6 +57,11 @@ if (typeof window !== 'undefined') {
 // INTEGRATED GAME MANAGER
 // ============================================================
 
+export interface NarrativeEffect {
+  type: string;
+  force: { x: number; y: number };
+}
+
 export class IntegratedGameManager {
   private xylos: XylosSystem;
   private messages: DynamicMessageSystem;

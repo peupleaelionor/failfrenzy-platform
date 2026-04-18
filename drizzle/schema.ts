@@ -1,29 +1,33 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { integer, pgEnum, pgTable, serial, text, timestamp, varchar } from "drizzle-orm/pg-core";
+
+/**
+ * Enums for PostgreSQL
+ */
+export const roleEnum = pgEnum("role", ["user", "admin"]);
+export const gameModeEnum = pgEnum("game_mode", ["classic", "time_trial", "infinite", "seeds"]);
+export const achievementTierEnum = pgEnum("achievement_tier", ["bronze", "silver", "gold", "platinum"]);
+export const skinRarityEnum = pgEnum("skin_rarity", ["common", "rare", "epic", "legendary"]);
+export const purchaseTypeEnum = pgEnum("purchase_type", ["subscription", "tokens", "skin"]);
+export const purchaseStatusEnum = pgEnum("purchase_status", ["pending", "completed", "failed", "refunded"]);
+export const tokenTxTypeEnum = pgEnum("token_tx_type", ["purchase", "reward", "referral", "daily", "ad", "spend"]);
 
 /**
  * Core user table backing auth flow.
- * Extend this file with additional tables as your product grows.
- * Columns use camelCase to match both database fields and generated types.
  */
-export const users = mysqlTable("users", {
-  /**
-   * Surrogate primary key. Auto-incremented numeric value managed by the database.
-   * Use this for relations between tables.
-   */
-  id: int("id").autoincrement().primaryKey(),
-  /** Manus OAuth identifier (openId) returned from the OAuth callback. Unique per user. */
-  openId: varchar("openId", { length: 64 }).notNull().unique(),
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  /** Supabase Auth user ID (UUID). Unique per user. */
+  supabaseId: varchar("supabase_id", { length: 64 }).notNull().unique(),
   name: text("name"),
   email: varchar("email", { length: 320 }),
-  loginMethod: varchar("loginMethod", { length: 64 }),
-  role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
-  isPremium: int("is_premium").notNull().default(0), // 0 = false, 1 = true
+  role: roleEnum("role").default("user").notNull(),
+  isPremium: integer("is_premium").notNull().default(0),
   premiumExpiresAt: timestamp("premium_expires_at"),
-  tokens: int("tokens").notNull().default(0),
+  tokens: integer("tokens").notNull().default(0),
   stripeCustomerId: varchar("stripe_customer_id", { length: 256 }),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-  lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  lastSignedIn: timestamp("last_signed_in").defaultNow().notNull(),
 });
 
 export type User = typeof users.$inferSelect;
@@ -32,14 +36,14 @@ export type InsertUser = typeof users.$inferInsert;
 /**
  * Scores table - stores all game scores with detailed stats
  */
-export const scores = mysqlTable("scores", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("user_id").notNull(),
-  mode: mysqlEnum("mode", ["classic", "time_trial", "infinite", "seeds"]).notNull(),
-  score: int("score").notNull(),
-  fails: int("fails").notNull().default(0),
-  time: int("time").notNull(), // in seconds
-  combo: int("combo").default(0),
+export const scores = pgTable("scores", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  mode: gameModeEnum("mode").notNull(),
+  score: integer("score").notNull(),
+  fails: integer("fails").notNull().default(0),
+  time: integer("time").notNull(),
+  combo: integer("combo").default(0),
   seed: varchar("seed", { length: 64 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -50,12 +54,12 @@ export type InsertScore = typeof scores.$inferInsert;
 /**
  * Achievements table - defines all available achievements
  */
-export const achievements = mysqlTable("achievements", {
+export const achievements = pgTable("achievements", {
   id: varchar("id", { length: 64 }).primaryKey(),
   name: varchar("name", { length: 128 }).notNull(),
   description: text("description").notNull(),
-  tier: mysqlEnum("tier", ["bronze", "silver", "gold", "platinum"]).notNull(),
-  rewardTokens: int("reward_tokens").notNull().default(0),
+  tier: achievementTierEnum("tier").notNull(),
+  rewardTokens: integer("reward_tokens").notNull().default(0),
   icon: varchar("icon", { length: 256 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -66,9 +70,9 @@ export type InsertAchievement = typeof achievements.$inferInsert;
 /**
  * User Achievements - tracks which achievements users have unlocked
  */
-export const userAchievements = mysqlTable("user_achievements", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("user_id").notNull(),
+export const userAchievements = pgTable("user_achievements", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
   achievementId: varchar("achievement_id", { length: 64 }).notNull(),
   unlockedAt: timestamp("unlocked_at").defaultNow().notNull(),
 });
@@ -79,14 +83,14 @@ export type InsertUserAchievement = typeof userAchievements.$inferInsert;
 /**
  * Skins table - all available skins in the shop
  */
-export const skins = mysqlTable("skins", {
+export const skins = pgTable("skins", {
   id: varchar("id", { length: 64 }).primaryKey(),
   name: varchar("name", { length: 128 }).notNull(),
   description: text("description"),
-  priceTokens: int("price_tokens").notNull(),
-  rarity: mysqlEnum("rarity", ["common", "rare", "epic", "legendary"]).notNull(),
+  priceTokens: integer("price_tokens").notNull(),
+  rarity: skinRarityEnum("rarity").notNull(),
   imageUrl: varchar("image_url", { length: 512 }),
-  isPremium: int("is_premium").notNull().default(0), // 0 = false, 1 = true
+  isPremium: integer("is_premium").notNull().default(0),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -96,9 +100,9 @@ export type InsertSkin = typeof skins.$inferInsert;
 /**
  * User Skins - tracks which skins users have unlocked
  */
-export const userSkins = mysqlTable("user_skins", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("user_id").notNull(),
+export const userSkins = pgTable("user_skins", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
   skinId: varchar("skin_id", { length: 64 }).notNull(),
   unlockedAt: timestamp("unlocked_at").defaultNow().notNull(),
 });
@@ -109,16 +113,16 @@ export type InsertUserSkin = typeof userSkins.$inferInsert;
 /**
  * Purchases table - tracks all user purchases (subscriptions, tokens, skins)
  */
-export const purchases = mysqlTable("purchases", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("user_id").notNull(),
-  type: mysqlEnum("type", ["subscription", "tokens", "skin"]).notNull(),
-  itemId: varchar("item_id", { length: 128 }), // skin_id or token_pack_id
-  amount: int("amount").notNull(), // in cents for money, or token count
+export const purchases = pgTable("purchases", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  type: purchaseTypeEnum("type").notNull(),
+  itemId: varchar("item_id", { length: 128 }),
+  amount: integer("amount").notNull(),
   currency: varchar("currency", { length: 3 }).default("EUR"),
   stripePaymentId: varchar("stripe_payment_id", { length: 256 }),
   stripeSubscriptionId: varchar("stripe_subscription_id", { length: 256 }),
-  status: mysqlEnum("status", ["pending", "completed", "failed", "refunded"]).notNull().default("pending"),
+  status: purchaseStatusEnum("status").notNull().default("pending"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -128,13 +132,13 @@ export type InsertPurchase = typeof purchases.$inferInsert;
 /**
  * Token Transactions - tracks all token additions and spending
  */
-export const tokenTransactions = mysqlTable("token_transactions", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("user_id").notNull(),
-  amount: int("amount").notNull(), // positive for additions, negative for spending
-  type: mysqlEnum("type", ["purchase", "reward", "referral", "daily", "ad", "spend"]).notNull(),
+export const tokenTransactions = pgTable("token_transactions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  amount: integer("amount").notNull(),
+  type: tokenTxTypeEnum("type").notNull(),
   description: text("description"),
-  relatedId: int("related_id"), // purchase_id, achievement_id, etc.
+  relatedId: integer("related_id"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -144,14 +148,14 @@ export type InsertTokenTransaction = typeof tokenTransactions.$inferInsert;
 /**
  * Daily Challenges - defines daily challenges
  */
-export const dailyChallenges = mysqlTable("daily_challenges", {
-  id: int("id").autoincrement().primaryKey(),
+export const dailyChallenges = pgTable("daily_challenges", {
+  id: serial("id").primaryKey(),
   date: timestamp("date").notNull(),
-  mode: mysqlEnum("mode", ["classic", "time_trial", "infinite", "seeds"]).notNull(),
+  mode: gameModeEnum("mode").notNull(),
   description: text("description").notNull(),
-  targetScore: int("target_score"),
-  targetTime: int("target_time"),
-  rewardTokens: int("reward_tokens").notNull().default(50),
+  targetScore: integer("target_score"),
+  targetTime: integer("target_time"),
+  rewardTokens: integer("reward_tokens").notNull().default(50),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -161,10 +165,10 @@ export type InsertDailyChallenge = typeof dailyChallenges.$inferInsert;
 /**
  * User Challenges - tracks completed challenges
  */
-export const userChallenges = mysqlTable("user_challenges", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("user_id").notNull(),
-  challengeId: int("challenge_id").notNull(),
+export const userChallenges = pgTable("user_challenges", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  challengeId: integer("challenge_id").notNull(),
   completedAt: timestamp("completed_at").defaultNow().notNull(),
 });
 
@@ -174,12 +178,12 @@ export type InsertUserChallenge = typeof userChallenges.$inferInsert;
 /**
  * Referrals - tracks referral codes and rewards
  */
-export const referrals = mysqlTable("referrals", {
-  id: int("id").autoincrement().primaryKey(),
-  referrerId: int("referrer_id").notNull(),
-  referredId: int("referred_id"),
+export const referrals = pgTable("referrals", {
+  id: serial("id").primaryKey(),
+  referrerId: integer("referrer_id").notNull(),
+  referredId: integer("referred_id"),
   code: varchar("code", { length: 32 }).notNull().unique(),
-  rewardClaimed: int("reward_claimed").notNull().default(0), // 0 = false, 1 = true
+  rewardClaimed: integer("reward_claimed").notNull().default(0),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -189,17 +193,17 @@ export type InsertReferral = typeof referrals.$inferInsert;
 /**
  * User Stats - aggregated statistics for each user
  */
-export const userStats = mysqlTable("user_stats", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("user_id").notNull().unique(),
-  totalGames: int("total_games").notNull().default(0),
-  totalScore: int("total_score").notNull().default(0),
-  highScore: int("high_score").notNull().default(0),
-  totalPlayTime: int("total_play_time").notNull().default(0), // in seconds
-  currentStreak: int("current_streak").notNull().default(0),
-  longestStreak: int("longest_streak").notNull().default(0),
+export const userStats = pgTable("user_stats", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().unique(),
+  totalGames: integer("total_games").notNull().default(0),
+  totalScore: integer("total_score").notNull().default(0),
+  highScore: integer("high_score").notNull().default(0),
+  totalPlayTime: integer("total_play_time").notNull().default(0),
+  currentStreak: integer("current_streak").notNull().default(0),
+  longestStreak: integer("longest_streak").notNull().default(0),
   lastPlayedAt: timestamp("last_played_at"),
-  updatedAt: timestamp("updated_at").defaultNow().onUpdateNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 export type UserStats = typeof userStats.$inferSelect;

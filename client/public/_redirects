@@ -1,0 +1,26 @@
+# Fail Frenzy – Netlify _redirects
+# Processed in order; first match wins.
+# This file supplements netlify.toml redirects.
+
+# API calls are handled by the edge function (api-proxy)
+# /api/*  → edge function handles proxying
+
+# Static assets pass through (no rewrite)
+/assets/*           /assets/:splat        200
+/manifest.json      /manifest.json        200
+/robots.txt         /robots.txt           200
+/sitemap.xml        /sitemap.xml          200
+
+# Known SPA routes → serve index.html
+/                   /index.html           200
+/game               /index.html           200
+/dashboard          /index.html           200
+/shop               /index.html           200
+/leaderboard        /index.html           200
+/premium            /index.html           200
+/login              /index.html           200
+/signup             /index.html           200
+/admin              /index.html           200
+
+# SPA fallback – all other routes
+/*                  /index.html           200
