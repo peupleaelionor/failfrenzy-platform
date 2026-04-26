@@ -213,7 +213,16 @@ export class WebGPURenderer implements IRenderer {
     this.width = canvas.width;
     this.height = canvas.height;
     this.fallback = new Canvas2DRenderer(canvas);
-    this.instanceData = new Float32Array(this.MAX_INSTANCES * 8); // pos(2) + radius(1) + pad(1) + color(4)
+    // Instance buffer layout (8 floats × 4 bytes = 32 bytes per instance):
+    //   offset  0: pos.x  (float32)
+    //   offset  4: pos.y  (float32)
+    //   offset  8: radius (float32)
+    //   offset 12: pad    (float32) – required for vec4 alignment in WGSL structs
+    //   offset 16: color.r (float32)
+    //   offset 20: color.g (float32)
+    //   offset 24: color.b (float32)
+    //   offset 28: color.a (float32)
+    this.instanceData = new Float32Array(this.MAX_INSTANCES * 8);
     this.initAsync(canvas).catch((err) => {
       console.warn("[WebGPURenderer] Init failed, using Canvas2D fallback:", err);
     });

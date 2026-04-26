@@ -61,7 +61,9 @@ export class VoiceCommandSystem {
 
     this.recognition.onresult = (event: SpeechRecognitionEvent) => {
       const last = event.results.length - 1;
-      const transcript = event.results[last]![0]!.transcript.trim().toLowerCase();
+      const result = event.results[last];
+      if (!result || !result[0]) return;
+      const transcript = result[0].transcript.trim().toLowerCase();
       this.processTranscript(transcript);
     };
 

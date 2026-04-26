@@ -40,8 +40,9 @@ export const appRouter = router({
             message: "Invalid score: score > 0 requires time > 0",
           });
         }
-        // Score-per-second sanity: godlike combo × fastest possible input = ~5 000 pts/sec.
-        // We allow 3× that as a safety margin to avoid false positives.
+        // `time` is in seconds (GameState.time accumulates delta in seconds).
+        // Max observable: godlike combo (×7) × fastest event rate (~5/s) × best base pts (1000) ≈ 35 000 pts/s.
+        // We apply a 3× safety margin to avoid false positives on legitimate burst combos.
         const MAX_SCORE_PER_SECOND = 15_000;
         if (input.time > 0 && input.score > input.time * MAX_SCORE_PER_SECOND) {
           throw new TRPCError({

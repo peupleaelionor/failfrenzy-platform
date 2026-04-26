@@ -129,9 +129,7 @@ export class GameReplayer {
     if (this._state !== "playing" || !this.data) return;
 
     const posMs = (performance.now() - this.playbackStart) * this._speed;
-    this._currentPosMs = posMs;
-
-    // Fire all input events whose timestamp has passed
+    this._currentPosMs = posMs;    // Fire all input events whose timestamp has passed
     while (
       this.nextInputIndex < this.data.inputs.length &&
       this.data.inputs[this.nextInputIndex]!.t <= posMs

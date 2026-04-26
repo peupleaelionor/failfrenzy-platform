@@ -21,8 +21,8 @@ function getStripe(): Stripe {
 // ── In-process event-ID cache ─────────────────────────────────────────────────
 // Prevents double-processing when Stripe retries a webhook that succeeded but
 // returned a non-2xx response (e.g. transient DB hiccup).
-// The Set is intentionally ephemeral: a process restart clears it, but by then
-// the idempotency window with Stripe has also passed.
+// We rely on ES2015+ Set insertion-order for LRU eviction; all supported
+// Node.js runtimes (≥12) guarantee this behaviour.
 
 const MAX_CACHED_EVENTS = 2000;
 const processedEventIds = new Set<string>();

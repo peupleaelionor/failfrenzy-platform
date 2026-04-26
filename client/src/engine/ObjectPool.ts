@@ -38,9 +38,7 @@ export class ObjectPool<T> {
   /** Number of objects currently idle in the pool. */
   get size(): number {
     return this.pool.length;
-  }
-
-  /** Discard all pooled objects (e.g. on scene reset). */
+  }  /** Discard all pooled objects (e.g. on scene reset). */
   clear(): void {
     this.pool.length = 0;
   }

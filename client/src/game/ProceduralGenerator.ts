@@ -135,7 +135,10 @@ export class ProceduralGenerator {
              : type === "laser" ? rng.nextRange(4, 8)
              : rng.nextRange(10, 20),
       speedX: Math.cos(angleRad) * baseSpeed * speedMultiplier,
-      speedY: Math.abs(Math.sin(angleRad)) * baseSpeed * speedMultiplier, // bias downwards
+      // Y is always positive (downward) to bias obstacles toward the player.
+      // The angle only determines the ratio of horizontal vs vertical speed;
+      // obstacles never travel upward off-screen.
+      speedY: Math.abs(Math.sin(angleRad)) * baseSpeed * speedMultiplier,
       type,
     };
   }

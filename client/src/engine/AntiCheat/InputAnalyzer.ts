@@ -49,6 +49,9 @@ export class InputAnalyzer {
     const cv = InputAnalyzer.coefficientOfVariation(intervals);
     if (cv < InputAnalyzer.MIN_CV) {
       reasons.push(`Input timing too regular (CV=${cv.toFixed(3)}, threshold=${InputAnalyzer.MIN_CV})`);
+      // Confidence scales linearly: 0.7 at the threshold, approaching 1.0 as CV approaches 0.
+      // The multiplier 5 was chosen so that a CV of 0 (perfectly uniform script) gives confidence 1.0
+      // and a CV at the threshold gives 0.7, with smooth interpolation in between.
       confidence = Math.max(confidence, 0.7 + (InputAnalyzer.MIN_CV - cv) * 5);
     }
 

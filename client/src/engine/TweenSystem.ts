@@ -110,9 +110,9 @@ export class TweenSystem {
         ease: "cubicOut",
         repeat: 0,
         yoyo: false,
-        onStart: undefined!,
-        onUpdate: undefined!,
-        onComplete: undefined!,
+        onStart: undefined as unknown as () => void,
+        onUpdate: undefined as unknown as (p: number) => void,
+        onComplete: undefined as unknown as () => void,
         ...options,
       } as Required<TweenOptions>,
       elapsed: 0,
@@ -146,7 +146,7 @@ export class TweenSystem {
 
       if (!tw.started) {
         tw.started = true;
-        tw.opts.onStart?.();
+        if (tw.opts.onStart) tw.opts.onStart();
       }
 
       const rawT = Math.min(1, localTime / tw.opts.duration);
@@ -160,7 +160,7 @@ export class TweenSystem {
         (tw.target as Record<string, number>)[key] = fromVal + (toVal - fromVal) * t;
       }
 
-      tw.opts.onUpdate?.(rawT);
+      if (tw.opts.onUpdate) tw.opts.onUpdate(rawT);
 
       if (rawT >= 1) {
         tw.iteration++;
@@ -175,7 +175,7 @@ export class TweenSystem {
           }
         } else {
           tw.done = true;
-          tw.opts.onComplete?.();
+          if (tw.opts.onComplete) tw.opts.onComplete();
         }
       }
     }
