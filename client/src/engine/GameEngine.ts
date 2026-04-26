@@ -364,6 +364,44 @@ export class GameEngine {
   public resume(): void {
     this.state.isPaused = false;
   }
+
+  // ── Replay / Spectator API ─────────────────────────────────────────────────
+  // These methods satisfy the IReplayTarget interface used by GameReplayer.
+
+  /** The ID of the entity currently being controlled (for replay positioning). */
+  private controlledEntityId: string | null = null;
+
+  /** Register which entity ID represents the player (called by FailFrenzyGame). */
+  public setControlledEntity(id: string): void {
+    this.controlledEntityId = id;
+  }
+
+  /**
+   * Teleport the controlled entity to the given X coordinate.
+   * Used by GameReplayer to feed back recorded positions.
+   */
+  public setPlayerX(x: number): void {
+    if (!this.controlledEntityId) return;
+    const entity = this.getEntity(this.controlledEntityId);
+    if (entity) entity.x = Math.max(0, Math.min(this.config.width, x));
+  }
+
+  /**
+   * Set both X and Y (full position seek for snapshot-based replay).
+   */
+  public setPlayerPosition(x: number, y: number): void {
+    if (!this.controlledEntityId) return;
+    const entity = this.getEntity(this.controlledEntityId);
+    if (entity) {
+      entity.x = Math.max(0, Math.min(this.config.width, x));
+      entity.y = Math.max(0, Math.min(this.config.height, y));
+    }
+  }
+
+  /** Override the score (used by replay and anti-cheat). */
+  public setScore(score: number): void {
+    this.state.score = Math.max(0, score);
+  }
   
   public reset(): void {
     this.entities.clear();

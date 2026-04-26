@@ -22,15 +22,33 @@ export const appRouter = router({
       .input(
         z.object({
           mode: z.enum(["classic", "time_trial", "infinite", "seeds"]),
-          score: z.number().int().min(0),
-          fails: z.number().int().min(0).default(0),
+          score: z.number().int().min(0).max(10_000_000),
+          fails: z.number().int().min(0).max(10_000).default(0),
           time: z.number().int().min(0),
           combo: z.number().int().min(0).optional(),
-          seed: z.string().optional(),
+          seed: z.string().max(64).optional(),
         })
       )
       .mutation(async ({ ctx, input }) => {
         const userId = ctx.user.id;
+
+        // ── Server-side sanity checks ─────────────────────────────────────────
+        // A non-zero score requires a non-zero play time.
+        if (input.score > 0 && input.time === 0) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Invalid score: score > 0 requires time > 0",
+          });
+        }
+        // Score-per-second sanity: godlike combo × fastest possible input = ~5 000 pts/sec.
+        // We allow 3× that as a safety margin to avoid false positives.
+        const MAX_SCORE_PER_SECOND = 15_000;
+        if (input.time > 0 && input.score > input.time * MAX_SCORE_PER_SECOND) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Score exceeds theoretical maximum for the given play time",
+          });
+        }
 
         // Insert score
         await db.insertScore({
@@ -84,6 +102,76 @@ export const appRouter = router({
       )
       .query(async ({ ctx, input }) => {
         return db.getUserHighScore(ctx.user.id, input.mode);
+      }),
+
+    // ── Replay / Spectator ────────────────────────────────────────────────────
+
+    submitReplay: protectedProcedure
+      .input(
+        z.object({
+          mode: z.enum(["classic", "time_trial", "infinite", "seeds"]),
+          score: z.number().int().min(0).max(10_000_000),
+          durationMs: z.number().int().min(0),
+          seed: z.string().max(64).optional(),
+          /**
+           * Base64-encoded JSON of RecordingData from GameRecorder.
+           * Max 256 KB (≈ 30 min of dense input).
+           */
+          replayData: z.string().max(256 * 1024),
+          /** Anti-cheat analysis result from client-side InputAnalyzer. */
+          suspicious: z.boolean().optional(),
+          antiCheatReasons: z.array(z.string()).optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        const userId = ctx.user.id;
+
+        // Flag replays the client itself flagged as suspicious
+        const flagged = input.suspicious ? 1 : 0;
+
+        if (input.suspicious && input.antiCheatReasons?.length) {
+          console.warn(
+            `[AntiCheat] Replay from user ${userId} flagged: ${input.antiCheatReasons.join(", ")}`
+          );
+        }
+
+        const id = await db.saveReplay({
+          userId,
+          mode: input.mode,
+          score: input.score,
+          durationMs: input.durationMs,
+          seed: input.seed,
+          replayData: input.replayData,
+          flagged,
+        });
+
+        return { id };
+      }),
+
+    getReplay: publicProcedure
+      .input(z.object({ id: z.number().int().positive() }))
+      .query(async ({ input }) => {
+        const replay = await db.getReplayById(input.id);
+        if (!replay) throw new TRPCError({ code: "NOT_FOUND", message: "Replay not found" });
+        if (replay.flagged) throw new TRPCError({ code: "FORBIDDEN", message: "Replay flagged for review" });
+        return replay;
+      }),
+
+    getMyReplays: protectedProcedure
+      .input(z.object({ limit: z.number().int().min(1).max(50).default(20) }))
+      .query(async ({ ctx, input }) => {
+        return db.getUserReplays(ctx.user.id, input.limit);
+      }),
+
+    getTopReplays: publicProcedure
+      .input(
+        z.object({
+          mode: z.enum(["classic", "time_trial", "infinite", "seeds"]).optional(),
+          limit: z.number().int().min(1).max(20).default(10),
+        })
+      )
+      .query(async ({ input }) => {
+        return db.getTopReplays(input.mode, input.limit);
       }),
   }),
 

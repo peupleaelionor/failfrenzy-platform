@@ -18,6 +18,29 @@ function getStripe(): Stripe {
   return _stripe;
 }
 
+// ── In-process event-ID cache ─────────────────────────────────────────────────
+// Prevents double-processing when Stripe retries a webhook that succeeded but
+// returned a non-2xx response (e.g. transient DB hiccup).
+// The Set is intentionally ephemeral: a process restart clears it, but by then
+// the idempotency window with Stripe has also passed.
+
+const MAX_CACHED_EVENTS = 2000;
+const processedEventIds = new Set<string>();
+
+function isEventCached(eventId: string): boolean {
+  return processedEventIds.has(eventId);
+}
+
+function cacheEventId(eventId: string): void {
+  if (processedEventIds.size >= MAX_CACHED_EVENTS) {
+    // Evict the oldest entry (insertion order)
+    const first = processedEventIds.values().next().value;
+    if (first) processedEventIds.delete(first);
+  }
+  processedEventIds.add(eventId);
+}
+
+
 export async function handleStripeWebhook(req: Request, res: Response) {
   const sig = req.headers["stripe-signature"];
 
@@ -41,6 +64,12 @@ export async function handleStripeWebhook(req: Request, res: Response) {
     return res.json({
       verified: true,
     });
+  }
+
+  // ── Idempotency: skip if we've already processed this event ─────────────────
+  if (isEventCached(event.id)) {
+    console.log(`[Stripe Webhook] Duplicate event skipped (in-process cache): ${event.id}`);
+    return res.json({ received: true });
   }
 
   console.log(`[Stripe Webhook] Received event: ${event.type} (${event.id})`);
@@ -72,6 +101,9 @@ export async function handleStripeWebhook(req: Request, res: Response) {
     }
 
     res.json({ received: true });
+
+    // ── Cache the event ID after successful processing ────────────────────────
+    cacheEventId(event.id);
   } catch (error) {
     console.error("[Stripe Webhook] Error processing event:", error);
     res.status(500).send("Webhook handler failed");
@@ -85,6 +117,16 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   if (!userId) {
     console.error("[Stripe] No user_id in session metadata");
     return;
+  }
+
+  // ── DB-level idempotency: skip if payment_intent was already recorded ────
+  const paymentId = session.payment_intent as string | null;
+  if (paymentId) {
+    const existing = await db.findPurchaseByStripePaymentId(paymentId);
+    if (existing) {
+      console.log(`[Stripe] Checkout already processed for payment ${paymentId}, skipping`);
+      return;
+    }
   }
 
   const mode = session.mode;
@@ -175,6 +217,13 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
 
   if (!subscriptionId) return;
 
+  // ── DB-level idempotency: use the invoice ID as the unique payment key ───
+  const existingInvoice = await db.findPurchaseByStripePaymentId(invoice.id);
+  if (existingInvoice) {
+    console.log(`[Stripe] Invoice ${invoice.id} already processed, skipping`);
+    return;
+  }
+
   // Get subscription
   const subscription = await getStripe().subscriptions.retrieve(subscriptionId);
 
@@ -196,6 +245,18 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
 
   // Renew premium
   await db.setPremiumStatus(userId, true, expiresAt, customerId);
+
+  // Record the invoice so future retries are skipped
+  await db.createPurchase({
+    userId,
+    type: "subscription",
+    itemId: "renewal",
+    amount: invoice.amount_paid ?? 0,
+    currency: invoice.currency?.toUpperCase() ?? "EUR",
+    stripePaymentId: invoice.id,
+    stripeSubscriptionId: subscriptionId,
+    status: "completed",
+  });
 
   console.log(`[Stripe] Premium renewed for user ${userId} until ${expiresAt}`);
 }
