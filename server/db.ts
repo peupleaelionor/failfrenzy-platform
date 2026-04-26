@@ -5,10 +5,12 @@ import {
   achievements,
   dailyChallenges,
   type InsertPurchase,
+  type InsertReplay,
   type InsertScore,
   type InsertUserStats,
   purchases,
   referrals,
+  replays,
   scores,
   skins,
   tokenTransactions,
@@ -518,4 +520,84 @@ export async function getUserPurchases(userId: number, limit = 50) {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(purchases).where(eq(purchases.userId, userId)).orderBy(desc(purchases.createdAt)).limit(limit);
+}
+
+// ============ IDEMPOTENCY ============
+
+/**
+ * Check whether a Stripe payment or event has already been processed.
+ * Used by webhook handlers to prevent double-processing on retry.
+ */
+export async function findPurchaseByStripePaymentId(stripePaymentId: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db
+    .select()
+    .from(purchases)
+    .where(eq(purchases.stripePaymentId, stripePaymentId))
+    .limit(1);
+  return result.length > 0 ? result[0] : null;
+}
+
+// ============ REPLAYS ============
+
+export async function saveReplay(data: InsertReplay) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(replays).values(data).returning({ id: replays.id });
+  return result[0]!.id;
+}
+
+export async function getReplayById(id: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(replays).where(eq(replays.id, id)).limit(1);
+  return result.length > 0 ? result[0] : null;
+}
+
+export async function getUserReplays(userId: number, limit = 20) {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select({
+      id: replays.id,
+      mode: replays.mode,
+      score: replays.score,
+      durationMs: replays.durationMs,
+      seed: replays.seed,
+      flagged: replays.flagged,
+      createdAt: replays.createdAt,
+    })
+    .from(replays)
+    .where(eq(replays.userId, userId))
+    .orderBy(desc(replays.score))
+    .limit(limit);
+}
+
+export async function getTopReplays(mode?: string, limit = 10) {
+  const db = await getDb();
+  if (!db) return [];
+  const conditions = mode ? eq(replays.mode, mode as any) : undefined;
+  return db
+    .select({
+      id: replays.id,
+      userId: replays.userId,
+      userName: users.name,
+      mode: replays.mode,
+      score: replays.score,
+      durationMs: replays.durationMs,
+      seed: replays.seed,
+      createdAt: replays.createdAt,
+    })
+    .from(replays)
+    .leftJoin(users, eq(replays.userId, users.id))
+    .where(conditions)
+    .orderBy(desc(replays.score))
+    .limit(limit);
+}
+
+export async function flagReplay(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(replays).set({ flagged: 1 }).where(eq(replays.id, id));
 }

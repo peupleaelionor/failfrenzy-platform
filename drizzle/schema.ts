@@ -208,3 +208,24 @@ export const userStats = pgTable("user_stats", {
 
 export type UserStats = typeof userStats.$inferSelect;
 export type InsertUserStats = typeof userStats.$inferInsert;
+
+/**
+ * Replays – stores serialised recordings for spectator mode
+ */
+export const replays = pgTable("replays", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  mode: gameModeEnum("mode").notNull(),
+  score: integer("score").notNull(),
+  /** Duration in ms */
+  durationMs: integer("duration_ms").notNull(),
+  seed: varchar("seed", { length: 64 }),
+  /** Base64-encoded JSON of RecordingData (inputs + snapshots) */
+  replayData: text("replay_data").notNull(),
+  /** Anti-cheat analysis result: 0 = clean, 1 = flagged */
+  flagged: integer("flagged").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export type Replay = typeof replays.$inferSelect;
+export type InsertReplay = typeof replays.$inferInsert;
