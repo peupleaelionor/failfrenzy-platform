@@ -97,7 +97,7 @@ export class IntegratedGameManager {
   /**
    * Update tous les systèmes
    */
-  update(dt: number, playerX: number, playerY: number): NarrativeEffect[] | undefined {
+  update(dt: number, playerX: number, playerY: number): Array<{ type: NarrativeObstacleType; force: { x: number; y: number } }> | undefined {
     // Update Xylos
     if (this.flags.xylos) {
       this.xylos.update(dt);
@@ -141,6 +141,15 @@ export class IntegratedGameManager {
     // Render Xylos indicator (premium v3)
     if (this.flags.xylos) {
       this.xylos.renderIndicator(ctx, width, height);
+    }
+  }
+
+  /**
+   * Événement: Game Over
+   */
+  onGameOver(finalScore: number): void {
+    if (this.flags.dynamicMessages) {
+      this.messages.show('general', 'GAME OVER');
     }
   }
 

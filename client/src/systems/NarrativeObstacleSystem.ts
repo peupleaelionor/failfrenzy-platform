@@ -23,6 +23,8 @@ export interface NarrativeObstacle {
   width: number;
   height: number;
   obstacleType: NarrativeObstacleType;
+  vx: number;
+  vy: number;
   warningRadius: number;      // Distance pour déclencher warning
   effectRadius: number;       // Distance pour effet gameplay
   warningShown: boolean;
@@ -102,12 +104,20 @@ export function createNarrativeObstacle(
   }
 
   return {
+    id: `narrative-${type}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    type: 'narrative_obstacle',
     x,
     y,
     vx,
     vy,
     width,
     height,
+    velocity: { x: vx, y: vy },
+    acceleration: { x: 0, y: 0 },
+    scale: 1,
+    alive: true,
+    color: config.color,
+    components: new Map<string, any>(),
     obstacleType: type,
     warningRadius: config.warningRadius,
     effectRadius: config.effectRadius,
@@ -171,6 +181,11 @@ export class NarrativeObstacleSystem {
       obs.pulsePhase += dt * 3.0;
       
       if (obs.obstacleType === 'vortex') {
+        const vortexConfig = NARRATIVE_OBSTACLE_CONFIG.vortex;
+        obs.rotation += dt * vortexConfig.rotationSpeed;
+      } else if (obs.obstacleType === 'fissure') {
+        const fissureConfig = NARRATIVE_OBSTACLE_CONFIG.fissure;
+        obs.intensity = 0.5 + Math.sin(obs.pulsePhase * fissureConfig.flickerSpeed) * 0.5;
         obs.rotation += dt * NARRATIVE_OBSTACLE_CONFIG.vortex.rotationSpeed;
       } else if (obs.obstacleType === 'fissure') {
         obs.intensity = 0.5 + Math.sin(obs.pulsePhase * NARRATIVE_OBSTACLE_CONFIG.fissure.flickerSpeed) * 0.5;
@@ -215,10 +230,12 @@ export class NarrativeObstacleSystem {
     dy: number,
     distance: number
   ): { x: number; y: number } | null {
+
     if (obs.obstacleType === 'vortex') {
       const config = NARRATIVE_OBSTACLE_CONFIG.vortex;
       // Attraction vers le centre
-      const strength = config.pullStrength * (1 - distance / obs.effectRadius);
+      const vortexConfig = NARRATIVE_OBSTACLE_CONFIG.vortex;
+      const strength = vortexConfig.pullStrength * (1 - distance / obs.effectRadius);
       const angle = Math.atan2(dy, dx);
       return {
         x: -Math.cos(angle) * strength,
@@ -229,7 +246,8 @@ export class NarrativeObstacleSystem {
     if (obs.obstacleType === 'mini_black_hole') {
       const config = NARRATIVE_OBSTACLE_CONFIG.mini_black_hole;
       // Attraction forte
-      const strength = config.pullStrength * (1 - distance / obs.effectRadius);
+      const bhConfig = NARRATIVE_OBSTACLE_CONFIG.mini_black_hole;
+      const strength = bhConfig.pullStrength * (1 - distance / obs.effectRadius);
       const angle = Math.atan2(dy, dx);
       return {
         x: -Math.cos(angle) * strength * 2,
@@ -240,7 +258,8 @@ export class NarrativeObstacleSystem {
     if (obs.obstacleType === 'fissure') {
       const config = NARRATIVE_OBSTACLE_CONFIG.fissure;
       // Distorsion perpendiculaire
-      const strength = config.distortionStrength * (1 - distance / obs.effectRadius);
+      const fissureConfig = NARRATIVE_OBSTACLE_CONFIG.fissure;
+      const strength = fissureConfig.distortionStrength * (1 - distance / obs.effectRadius);
       const angle = Math.atan2(dy, dx) + Math.PI / 2;
       return {
         x: Math.cos(angle) * strength * Math.sin(obs.pulsePhase),
