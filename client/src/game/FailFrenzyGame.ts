@@ -312,7 +312,7 @@ export class FailFrenzyGame {
     this.activeSkin = getSelectedSkin();
 
     // Initialize systems
-    this.renderer = new NeonRenderer(engine['ctx'], engine['config'].width, engine['config'].height);
+    this.renderer = new NeonRenderer(this.engine['ctx'], this.engine['config'].width, this.engine['config'].height);
     this.physics = new PhysicsSystem();
     this.audio = new AudioSystem();
     this.combo = new ComboSystem();

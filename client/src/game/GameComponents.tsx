@@ -6,7 +6,7 @@
 
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { FailFrenzyGame, GameMode } from './FailFrenzyGame';
-import { GameEngine, GameState } from '../engine/GameEngine';
+import { GameState } from '../engine/GameEngine';
 import { AssetLoader, preloadAssets } from './AssetLoader';
 import { Link } from 'wouter';
 import {
@@ -570,11 +570,9 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ mode, assets, onScoreUpd
     if (!canvasRef.current) return;
     gameOverHandled.current = false;
 
-    let engine: GameEngine;
     let game: FailFrenzyGame;
     try {
-      engine = new GameEngine('game-canvas');
-      game = new FailFrenzyGame(engine, mode, assets);
+      game = new FailFrenzyGame('game-canvas', mode, assets);
       gameRef.current = game;
       game.start();
     } catch (err) {
@@ -597,38 +595,17 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({ mode, assets, onScoreUpd
             const ex = JSON.parse(localStorage.getItem(key) || '{}');
             const mn = mode.name || 'classic';
             if (!ex[mn] || st.score > ex[mn]) { ex[mn] = st.score; localStorage.setItem(key, JSON.stringify(ex)); }
+            const gsKey = 'failfrenzy_gamestats';
+            const gs = JSON.parse(localStorage.getItem(gsKey) || '{"totalGames":0,"totalScore":0,"totalFails":0,"totalTime":0}');
+            gs.totalGames = (gs.totalGames || 0) + 1;
+            gs.totalScore = (gs.totalScore || 0) + st.score;
+            gs.totalFails = (gs.totalFails || 0) + st.fails;
+            gs.totalTime = (gs.totalTime || 0) + Math.floor(st.time);
+            localStorage.setItem(gsKey, JSON.stringify(gs));
           } catch {}
         }
       } catch (err) {
         console.error('[FailFrenzy] Game loop error:', err);
-    const engine = new GameEngine('game-canvas', { width: 800, height: 500 });
-    const game = new FailFrenzyGame(engine, mode, assets);
-    gameRef.current = game;
-    game.start();
-
-    const iv = setInterval(() => {
-      const st = game.getState();
-      setGameState(st);
-      if (onScoreUpdate) onScoreUpdate(st.score);
-      if (st.isGameOver && !showGameOver) {
-        setShowGameOver(true);
-        setFinalStats({ score: st.score, fails: st.fails, time: st.time });
-        if (onGameOver) onGameOver(st.score, st.fails, st.time);
-        try {
-          // Save high scores per mode
-          const key = 'failfrenzy_highscores';
-          const ex = JSON.parse(localStorage.getItem(key) || '{}');
-          const mn = mode.name || 'classic';
-          if (!ex[mn] || st.score > ex[mn]) { ex[mn] = st.score; localStorage.setItem(key, JSON.stringify(ex)); }
-          // Update aggregate game stats
-          const gsKey = 'failfrenzy_gamestats';
-          const gs = JSON.parse(localStorage.getItem(gsKey) || '{"totalGames":0,"totalScore":0,"totalFails":0,"totalTime":0}');
-          gs.totalGames = (gs.totalGames || 0) + 1;
-          gs.totalScore = (gs.totalScore || 0) + st.score;
-          gs.totalFails = (gs.totalFails || 0) + st.fails;
-          gs.totalTime = (gs.totalTime || 0) + Math.floor(st.time);
-          localStorage.setItem(gsKey, JSON.stringify(gs));
-        } catch {}
       }
     }, 100);
 

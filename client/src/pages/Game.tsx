@@ -96,7 +96,6 @@ export default function Game() {
           onGameOver={(score) => {
             console.log('Game Over! Score:', score);
           }}
-          onGameOver={() => handleBackToModes()}
         />
         <button
           onClick={handleBackToModes}
